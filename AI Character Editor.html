@@ -1622,14 +1622,31 @@
         }
 
         function deleteGreeting(index) {
-            const textareas = document.querySelectorAll('.greeting-textarea');
-            if (textareas.length <= 1) {
+            const container = document.getElementById('greetingsContainer');
+            const greetingItems = container.querySelectorAll('.greeting-item');
+            
+            if (greetingItems.length <= 1) {
                 showToast('Cannot delete the only greeting!');
                 return;
             }
             
-            textareas[index].closest('.greeting-item').remove();
+            // Remove the greeting
+            greetingItems[index].remove();
+            
+            // Re-render all greetings with correct indices
+            const textareas = container.querySelectorAll('.greeting-textarea');
+            const greetingValues = Array.from(textareas).map(ta => ta.value);
+            
+            // Clear container and rebuild
+            container.innerHTML = '';
+            greetingCount = 0;
+            
+            greetingValues.forEach((value, i) => {
+                addGreeting(value);
+            });
+            
             updateStats();
+            showToast('Greeting deleted!');
         }
 
         function insertTextToGreeting(index, text) {
