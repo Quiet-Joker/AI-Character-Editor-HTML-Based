@@ -1,0 +1,2964 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Character Editor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif;
+            background: 
+                radial-gradient(circle at 100% 100%, #ff4800 0%, #ff8c42 20%, transparent 50%),
+                linear-gradient(315deg, #797a85 0%, #c6d3dc 100%);
+            background-size: cover;
+            min-height: 100vh;
+            padding: 2rem;
+            color: #1a1a1a;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding-left: 300px;
+            padding-right: 280px;
+        }
+
+        .main-content {
+            width: 100%;
+        }
+
+        .color-panel {
+            position: fixed;
+            right: 0;
+            top: 0;
+            width: 260px;
+            height: 100vh;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            padding: 1rem;
+            z-index: 1000;
+        }
+
+        .color-panel::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .color-panel::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        .color-panel::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+        }
+
+        .color-panel::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Tips Panel */
+        .tips-panel {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 280px;
+            height: 100vh;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            padding: 1rem;
+            z-index: 1000;
+        }
+
+        .tips-panel::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .tips-panel::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        .tips-panel::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+        }
+
+        .tips-panel::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .tip-section {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin-bottom: 0.75rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.2s ease;
+        }
+
+        .tip-section:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(4px);
+        }
+
+        .tip-title {
+            color: white;
+            font-weight: 700;
+            font-size: 0.8rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.9);
+        }
+
+        .tip-content {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.75rem;
+            line-height: 1.5;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.9);
+            font-weight: 500;
+        }
+
+        .tip-content strong {
+            color: rgba(255, 200, 100, 1);
+            font-weight: 700;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 20px rgba(0,0,0,0.1);
+        }
+
+        .header p {
+            font-size: 1.125rem;
+            color: rgba(255,255,255,0.9);
+        }
+
+        /* Glass Card */
+        .glass-card {
+            background: var(--glass-bg, rgba(255, 255, 255, 0.15));
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            animation: slideUp 0.6s ease-out;
+        }
+
+        /* Color Control Styles */
+        .color-control {
+            margin-bottom: 1rem;
+        }
+
+        .color-control-label {
+            color: white;
+            font-weight: 600;
+            font-size: 0.75rem;
+            margin-bottom: 0.5rem;
+            display: block;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.9);
+        }
+
+        .color-input-wrapper {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .color-picker {
+            width: 50px;
+            height: 35px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .color-picker:hover {
+            border-color: rgba(255, 255, 255, 0.6);
+            transform: scale(1.05);
+        }
+
+        .color-text-input {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            padding: 0.375rem;
+            color: white;
+            font-size: 0.7rem;
+            font-family: monospace;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.9);
+        }
+
+        .color-text-input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .opacity-slider {
+            width: 100%;
+            margin-top: 0.5rem;
+        }
+
+        .opacity-value {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.65rem;
+            text-align: right;
+            margin-top: 0.25rem;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.9);
+        }
+
+        .reset-btn {
+            width: 100%;
+            background: rgba(255, 100, 100, 0.3);
+            border: 1px solid rgba(255, 100, 100, 0.5);
+            color: white;
+            padding: 0.5rem;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.9);
+            margin-top: 0.75rem;
+        }
+
+        .reset-btn:hover {
+            background: rgba(255, 100, 100, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .gradient-stops {
+            display: flex;
+            flex-direction: column;
+            gap: 0.375rem;
+            margin-top: 0.375rem;
+        }
+
+        .gradient-stop {
+            display: flex;
+            gap: 0.375rem;
+            align-items: center;
+        }
+
+        .gradient-stop span {
+            font-size: 0.65rem;
+            width: 35px;
+        }
+
+        .gradient-stop input[type="number"] {
+            width: 50px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            padding: 0.25rem;
+            color: white;
+            font-size: 0.7rem;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.9);
+        }
+
+        /* Upload Section */
+        .upload-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .upload-box {
+            background: rgba(255, 255, 255, 0.25);
+            border: 2px dashed rgba(255, 255, 255, 0.4);
+            border-radius: 16px;
+            padding: 3rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-box:hover {
+            background: rgba(255, 255, 255, 0.35);
+            border-color: rgba(255, 255, 255, 0.6);
+            transform: translateY(-4px);
+        }
+
+        .upload-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .upload-box:hover::before {
+            left: 100%;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .upload-box h3 {
+            color: white;
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.9);
+            font-weight: 700;
+        }
+
+        .upload-box p {
+            color: rgba(255,255,255,0.9);
+            font-size: 0.875rem;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+            font-weight: 600;
+        }
+
+        /* Editor Grid */
+        .editor-grid {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 1.5rem;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .stats-card {
+            background: rgba(255, 255, 255, 0.25);
+            border-radius: 16px;
+            padding: 1.5rem;
+        }
+
+        .stats-card h3 {
+            color: white;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.9);
+            font-weight: 700;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            color: white;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.9);
+            font-weight: 600;
+        }
+
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+
+        .stat-value {
+            font-weight: 600;
+        }
+
+        /* Image Preview */
+        .image-preview {
+            background: rgba(255, 255, 255, 0.25);
+            border-radius: 16px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .image-preview img {
+            width: 100%;
+            border-radius: 12px;
+            margin-top: 0.5rem;
+        }
+
+        .image-placeholder {
+            width: 100%;
+            height: 300px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255,255,255,0.8);
+            font-size: 3rem;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.9);
+        }
+
+        /* Form Fields */
+        .form-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            color: white;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.9);
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .form-input, .form-textarea {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            padding: 0.875rem 1rem;
+            color: white;
+            font-size: 0.9375rem;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            font-weight: 600;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.9);
+        }
+
+        .form-input::placeholder,
+        .form-textarea::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+        }
+
+        .form-input:focus,
+        .form-textarea:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.5);
+            border-color: rgba(255, 255, 255, 0.6);
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
+        }
+
+        .form-textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        /* Token Counter */
+        .token-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 0.5rem;
+            font-size: 0.75rem;
+            color: rgba(255,255,255,0.95);
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.9);
+            font-weight: 600;
+        }
+
+        .token-count {
+            display: flex;
+            gap: 1rem;
+        }
+
+        /* Quick Insert Bar */
+        .quick-insert {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 0.5rem;
+        }
+
+        .quick-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 0.375rem 0.75rem;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            cursor: grab;
+            transition: all 0.2s ease;
+            font-weight: 500;
+            user-select: none;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.9);
+        }
+
+        .quick-btn:hover {
+            background: rgba(255, 255, 255, 0.35);
+            transform: translateY(-1px);
+        }
+
+        .quick-btn:active {
+            cursor: grabbing;
+        }
+
+        .quick-btn.dragging {
+            opacity: 0.5;
+            cursor: grabbing;
+        }
+
+        /* Mode Toggle Switch */
+        .mode-toggle {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            padding: 0.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+
+        .mode-toggle label {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.9);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .toggle-switch.active {
+            background: rgba(100, 200, 100, 0.5);
+        }
+
+        .toggle-slider {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .toggle-switch.active .toggle-slider {
+            transform: translateX(20px);
+        }
+
+        .mode-description {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.7rem;
+            font-style: italic;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+        }
+
+        /* Export Section */
+        .export-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .export-btn {
+            background: rgba(255, 255, 255, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 1rem;
+            border-radius: 12px;
+            font-size: 0.9375rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.9);
+        }
+
+        .export-btn:hover {
+            background: rgba(255, 255, 255, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+
+        .export-btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+        }
+
+        /* Greeting Item Styles */
+        .greeting-item {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .greeting-item:not(:last-child) {
+            margin-bottom: 1rem;
+        }
+
+        .greeting-delete-btn {
+            background: rgba(255, 100, 100, 0.3);
+            border: 1px solid rgba(255, 100, 100, 0.5);
+            color: white;
+            padding: 0.375rem 0.75rem;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 500;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.9);
+        }
+
+        .greeting-delete-btn:hover {
+            background: rgba(255, 100, 100, 0.5);
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 1600px) {
+            .container {
+                padding-left: 2rem;
+                padding-right: 2rem;
+            }
+
+            .color-panel,
+            .tips-panel {
+                display: none;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .editor-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .upload-section {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Hidden Input */
+        .hidden-input {
+            display: none;
+        }
+
+        /* Common Words Section */
+        .common-words-card {
+            background: rgba(255, 255, 255, 0.25);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .common-words-card h3 {
+            color: white;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.9);
+            font-weight: 700;
+        }
+
+        .words-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .word-badge {
+            background: rgba(255, 255, 255, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            cursor: grab;
+            transition: all 0.2s ease;
+            user-select: none;
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.9);
+        }
+
+        .word-badge:hover {
+            background: rgba(255, 255, 255, 0.45);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .word-badge:active {
+            cursor: grabbing;
+            transform: translateY(0);
+        }
+
+        .word-badge.dragging {
+            opacity: 0.5;
+            cursor: grabbing;
+        }
+
+        .word-count {
+            background: rgba(255, 255, 255, 0.3);
+            padding: 0.125rem 0.375rem;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        }
+
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            animation: slideIn 0.3s ease-out;
+            z-index: 1000;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Tips Panel -->
+    <div class="tips-panel">
+        <h3 style="color: white; font-size: 0.875rem; margin-bottom: 1rem; text-align: center; text-shadow: 1px 1px 3px rgba(0,0,0,0.9);">💡 Character Creation Guide</h3>
+        
+        <div class="tip-section">
+            <div class="tip-title">📝 First Message is EVERYTHING</div>
+            <div class="tip-content">The AI learns MORE from the first message than any other field. It sets tone, length, writing style, POV (1st/3rd person), tense (past/present), and detail level. Want 300 token responses? Write 300 tokens. Want short and snappy? Keep it brief. Include actions in *asterisks* and "speech in quotes" to establish format.</div>
+        </div>
+
+        <div class="tip-section">
+            <div class="tip-title">🎯 "You Put In What You Want Out"</div>
+            <div class="tip-content">This is AliCat's golden rule. If you want to get to know the character, write example dialogues about getting to know them. Want action-packed RP? Include combat examples. Want detailed descriptions? Write detailed descriptions in examples. The AI mirrors what you show it.</div>
+        </div>
+
+        <div class="tip-section">
+            <div class="tip-title">📊 PList Format (Token Efficient)</div>
+            <div class="tip-content"><strong>Most token-efficient format.</strong> Structure: [Character's trait: "value1" + "value2" + "value3"]. Example: [Alice's persona: "confident" + "witty" + "protective"]. Group related traits together. DON'T split into too many arrays—it increases "leaking" where AI forgets format. Use : or = (: works better with LLaMA models).</div>
+        </div>
+
+        <div class="tip-section">
+            <div class="tip-title">💬 Ali:Chat Format (Example-Based)</div>
+            <div class="tip-content"><strong>Reinforces traits through dialogue.</strong> LLMs are pattern-seeking machines—show them patterns! Interview style: {{user}}: Question? {{char}}: Answer with personality. OR exchange style: roleplay between characters. Don't use quotation marks in Ali:Chat—confuses AI into novel-writing mode. Use &lt;START&gt; to separate different scenes.</div>
+        </div>
+
+        <div class="tip-section">
+            <div class="tip-title">⚡ W++ Format (Structured)</div>
+            <div class="tip-content">character("Name"){Mind("trait1"+"trait2") Personality("trait3") Body("detail1"+"detail2") Likes("thing1"+"thing2")}. More verbose than PList but very clear structure. Good for complex characters. Token cost: ~200+ tokens for detailed character. Mix with other formats for best results!</div>
+        </div>
+
+        <div class="tip-section">
+            <div class="tip-title">🔄 The Triple Reinforcement Rule</div>
+            <div class="tip-content">Mention CRITICAL details 3 times: 1) In Personality/Description (PList), 2) In Example Dialogue (Ali:Chat), 3) In First Message. This creates redundancy so AI remembers important traits. Example: If character has a scar, describe it in PList, mention it in examples, reference it in greeting.</div>
+        </div>
+
+        <div class="tip-section">
+            <div class="tip-title">⚖️ Token Budget Strategy</div>
+            <div class="tip-content"><strong>Character should use ≤50% of model's context.</strong> If model has 2048 tokens, keep character under 1024. Why? Leaves room for chat history. First message can be longer (200-400 tokens)—it eventually leaves context. Permanent fields (Personality/Description) should be 200-800 tokens. Use Author's Note for reinforcement instead of bloating description.</div>
+        </div>
+
+        <div class="tip-section">
+            <div class="tip-title">📚 Author's Note (Hidden Weapon)</div>
+            <div class="tip-content">Inject prompts at specific depth (recommend depth 4). Always stays in context at fixed position. Perfect for: reinforcing key traits, maintaining writing style, subtle behavior rules. Example: "{{char}} speaks with a slight accent. Keep responses under 300 tokens." Significantly more powerful than putting same info in description!</div>
+        </div>
+
+        <div class="tip-section">
+            <div class="tip-title">🎨 Physical Appearance Technique</div>
+            <div class="tip-content">Put visuals in Personality field, NOT separate box. Use compact format: [Alice's appearance: "tall" + "athletic build" + "short red hair" + "green eyes" + "usually wears leather jacket"]. Reinforce in first message: *She runs a hand through her short red hair*. Reinforce in examples: mention appearance naturally during dialogue.</div>
+        </div>
+
+        <div class="tip-section">
+            <div class="tip-title">💭 System Prompt Best Practices</div>
+            <div class="tip-content">Keep SHORT and focused. Use for: writing style ("Write in detailed prose"), behavioral rules ("Always maintain character's accent"), content guidelines. DON'T repeat what's in description. Good: "Use vivid sensory details. Responses should be 200-300 tokens." Bad: Restating entire personality.</div>
+        </div>
+
+        <div class="tip-section">
+            <div class="tip-title">🌍 Scenario Writing Formula</div>
+            <div class="tip-content">Set the SCENE, not the PLOT. Leave room for user creativity. Include: current situation, location details, relationship to {{user}} (if any), immediate context. Example: "{{char}} runs a bookshop in Victorian London. She knows {{user}} as a regular customer." NOT: "{{char}} will fall in love with {{user}} and they'll solve a mystery together."</div>
+        </div>
+
+        <div class="tip-section">
+            <div class="tip-title">🎪 Multiple Greetings Strategy</div>
+            <div class="tip-content">Each greeting = different scenario/mood. Greeting 1 (Primary): Neutral, safe introduction. Greeting 2: Different location. Greeting 3: Different emotional state. Greeting 4: Different time/context. This gives users variety without bloating main card. Test each greeting separately—they set different tones!</div>
+        </div>
+
+        <div class="tip-section">
+            <div class="tip-title">📝 Example Messages Deep Dive</div>
+            <div class="tip-content">Use &lt;START&gt; to separate dialogue blocks. Each block reinforces DIFFERENT aspects: Block 1: Core personality, Block 2: Speech patterns/quirks, Block 3: Lore/background, Block 4: Relationships/attitudes. Keep blocks 50-150 tokens each. Balance dialogue vs action—if all talk, AI talks too much. Show their way of moving, thinking, reacting.</div>
+        </div>
+
+        <div class="tip-section">
+            <div class="tip-title">🔍 Avoiding "PList Leaking"</div>
+            <div class="tip-content">DON'T over-categorize! More arrays = higher chance AI repeats format. Instead of: [trait1:"a"][trait2:"b"][trait3:"c"], use: [Character's traits:"a"+"b"+"c"]. Keep PList compact and grouped. Some creators put PList in Author's Note instead of description to prevent leaking into responses entirely.</div>
+        </div>
+
+        <div class="tip-section">
+            <div class="tip-title">🎭 Speech Patterns & Quirks</div>
+            <div class="tip-content">Make speech DISTINCT. Include: unique phrases ("Well, ain't that something"), speech impediments, accents (represent phonetically), verbal tics ("like", "you know", "nya"), sentence structure (short vs long), vocabulary level. Show in examples: {{char}}: "Ain't nobody gonna tell me what t'do, ya hear?" Avoid phonetic overload—subtle is better.</div>
+        </div>
+
+        <div class="tip-section">
+            <div class="tip-title">⚠️ Common Mistakes to Avoid</div>
+            <div class="tip-content">1) Too many tokens in permanent fields 2) Inconsistent POV/tense between sections 3) Using quotation marks in Ali:Chat 4) Over-explaining in description instead of showing in examples 5) First message doesn't match desired output length 6) No trait reinforcement across fields 7) Forgetting to test the character!</div>
+        </div>
+
+        <div class="tip-section">
+            <div class="tip-title">🧪 Testing Your Character</div>
+            <div class="tip-content">Chat for 10-20 messages minimum. Check: Does personality stay consistent? Are speech patterns maintained? Does it remember key details? Is response length/style correct? Try different scenarios. If character "breaks", identify what failed—usually needs more reinforcement of that specific trait. Edit, re-test, repeat.</div>
+        </div>
+
+        <div class="tip-section">
+            <div class="tip-title">📐 Advanced: Mixed Format Example</div>
+            <div class="tip-content" style="font-family: monospace; font-size: 0.7rem;">[Alice's core: "detective" + "cynical" + "insomniac"]<br>{{user}}: Why become a detective?<br>{{char}}: *lights cigarette* Someone's gotta find the truth in this cesspool. *exhales smoke* Might as well be me.</div>
+        </div>
+
+        <div class="tip-section">
+            <div class="tip-title">🎯 Token Micro-Optimization</div>
+            <div class="tip-content">Advanced tip: Use parenthetical descriptors. Instead of: "mint-green blouse, denim shorts", use: "blouse(mint-green)/shorts(denim)". For grouped traits like "light blue hair, short hair, messy hair" use: "hair(light-blue+short+messy)". Saves 2-5 tokens per item. Only worth it for very long descriptions.</div>
+        </div>
+
+        <div class="tip-section">
+            <div class="tip-title">💎 Pro Tips from the Community</div>
+            <div class="tip-content">• Use World Info/Lorebooks for location details, keep main card lean<br>• Alternate between using character's name and pronouns in examples<br>• Write greeting from character's perspective for stronger immersion<br>• Test with different models—optimization for one may not work for all<br>• Save multiple versions during creation—iterate don't restart!</div>
+        </div>
+    </div>
+
+    <!-- Color Control Panel -->
+    <div class="color-panel">
+        <h3 style="color: white; font-size: 0.875rem; margin-bottom: 1rem; text-align: center; text-shadow: 1px 1px 3px rgba(0,0,0,0.9);">🎨 Colors</h3>
+        
+        <!-- Background Gradient -->
+        <div class="color-control">
+            <label class="color-control-label">BG Gradient</label>
+            <div class="gradient-stops">
+                <div class="gradient-stop">
+                    <span style="color: rgba(255,255,255,0.8); text-shadow: 1px 1px 3px rgba(0,0,0,0.9);">Start:</span>
+                    <div class="color-input-wrapper" style="flex: 1;">
+                        <input type="color" id="bgGradientStart" class="color-picker" value="#797a85">
+                        <input type="text" id="bgGradientStartText" class="color-text-input" value="#797a85">
+                    </div>
+                </div>
+                <div class="gradient-stop">
+                    <span style="color: rgba(255,255,255,0.8); text-shadow: 1px 1px 3px rgba(0,0,0,0.9);">End:</span>
+                    <div class="color-input-wrapper" style="flex: 1;">
+                        <input type="color" id="bgGradientEnd" class="color-picker" value="#c6d3dc">
+                        <input type="text" id="bgGradientEndText" class="color-text-input" value="#c6d3dc">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Radial Gradient -->
+        <div class="color-control">
+            <label class="color-control-label">Accent</label>
+            <div class="gradient-stops">
+                <div class="gradient-stop">
+                    <span style="color: rgba(255,255,255,0.8); text-shadow: 1px 1px 3px rgba(0,0,0,0.9);">Start:</span>
+                    <div class="color-input-wrapper" style="flex: 1;">
+                        <input type="color" id="accentStart" class="color-picker" value="#ff4800">
+                        <input type="text" id="accentStartText" class="color-text-input" value="#ff4800">
+                    </div>
+                </div>
+                <div class="gradient-stop">
+                    <span style="color: rgba(255,255,255,0.8); text-shadow: 1px 1px 3px rgba(0,0,0,0.9);">Mid:</span>
+                    <div class="color-input-wrapper" style="flex: 1;">
+                        <input type="color" id="accentMid" class="color-picker" value="#ff8c42">
+                        <input type="text" id="accentMidText" class="color-text-input" value="#ff8c42">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Glass Card Background -->
+        <div class="color-control">
+            <label class="color-control-label">Glass Cards</label>
+            <div class="color-input-wrapper">
+                <input type="color" id="glassColor" class="color-picker" value="#ffffff">
+                <input type="text" id="glassColorText" class="color-text-input" value="#ffffff">
+            </div>
+            <input type="range" id="glassOpacity" class="opacity-slider" min="0" max="100" value="15">
+            <div class="opacity-value">Opacity: <span id="glassOpacityValue">15</span>%</div>
+        </div>
+
+        <!-- Stats Card Background -->
+        <div class="color-control">
+            <label class="color-control-label">Sidebar</label>
+            <div class="color-input-wrapper">
+                <input type="color" id="statsColor" class="color-picker" value="#ffffff">
+                <input type="text" id="statsColorText" class="color-text-input" value="#ffffff">
+            </div>
+            <input type="range" id="statsOpacity" class="opacity-slider" min="0" max="100" value="25">
+            <div class="opacity-value">Opacity: <span id="statsOpacityValue">25</span>%</div>
+        </div>
+
+        <!-- Input Background -->
+        <div class="color-control">
+            <label class="color-control-label">Inputs</label>
+            <div class="color-input-wrapper">
+                <input type="color" id="inputColor" class="color-picker" value="#ffffff">
+                <input type="text" id="inputColorText" class="color-text-input" value="#ffffff">
+            </div>
+            <input type="range" id="inputOpacity" class="opacity-slider" min="0" max="100" value="35">
+            <div class="opacity-value">Opacity: <span id="inputOpacityValue">35</span>%</div>
+        </div>
+
+        <!-- Button Background -->
+        <div class="color-control">
+            <label class="color-control-label">Buttons</label>
+            <div class="color-input-wrapper">
+                <input type="color" id="buttonColor" class="color-picker" value="#ffffff">
+                <input type="text" id="buttonColorText" class="color-text-input" value="#ffffff">
+            </div>
+            <input type="range" id="buttonOpacity" class="opacity-slider" min="0" max="100" value="20">
+            <div class="opacity-value">Opacity: <span id="buttonOpacityValue">20</span>%</div>
+        </div>
+
+        <!-- Export Button Gradient -->
+        <div class="color-control">
+            <label class="color-control-label">Primary</label>
+            <div class="gradient-stops">
+                <div class="gradient-stop">
+                    <span style="color: rgba(255,255,255,0.8); text-shadow: 1px 1px 3px rgba(0,0,0,0.9);">Start:</span>
+                    <div class="color-input-wrapper" style="flex: 1;">
+                        <input type="color" id="primaryStart" class="color-picker" value="#667eea">
+                        <input type="text" id="primaryStartText" class="color-text-input" value="#667eea">
+                    </div>
+                </div>
+                <div class="gradient-stop">
+                    <span style="color: rgba(255,255,255,0.8); text-shadow: 1px 1px 3px rgba(0,0,0,0.9);">End:</span>
+                    <div class="color-input-wrapper" style="flex: 1;">
+                        <input type="color" id="primaryEnd" class="color-picker" value="#764ba2">
+                        <input type="text" id="primaryEndText" class="color-text-input" value="#764ba2">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button class="reset-btn" onclick="resetColors()">Reset Defaults</button>
+        <button class="reset-btn" style="background: rgba(100, 200, 100, 0.3); border-color: rgba(100, 200, 100, 0.5); margin-top: 0.5rem;" onclick="saveColors()">Save Colors</button>
+    </div>
+
+    <div class="container">
+        <div class="main-content">
+        <!-- Header -->
+        <div class="header">
+            <h1>AI Character Editor</h1>
+            <p>Create, edit, and export AI character cards with ease</p>
+        </div>
+
+        <!-- Upload Section -->
+        <div class="glass-card">
+            <div class="upload-section">
+                <div class="upload-box" onclick="document.getElementById('fileInput').click()">
+                    <div class="upload-icon">📁</div>
+                    <h3>Load Character</h3>
+                    <p>Drop a JSON or PNG file here, or click to browse</p>
+                    <input type="file" id="fileInput" class="hidden-input" accept=".json,.png,.yaml,.yml" onchange="handleFileUpload(event)">
+                </div>
+                <div class="upload-box" onclick="createNewCharacter()">
+                    <div class="upload-icon">✨</div>
+                    <h3>New Character</h3>
+                    <p>Start from scratch and create a new character</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Editor Section -->
+        <div id="editorSection" style="display: none;">
+            <div class="editor-grid">
+                <!-- Sidebar -->
+                <div class="sidebar">
+                    <!-- Image Preview -->
+                    <div class="glass-card image-preview">
+                        <h3 class="form-label">📷 Character Image</h3>
+                        <div id="imagePreview" class="image-placeholder">
+                            <span>No Image</span>
+                        </div>
+                        <input type="file" id="imageInput" class="hidden-input" accept="image/*" onchange="handleImageUpload(event)">
+                        <button class="export-btn" style="margin-top: 1rem; width: 100%;" onclick="document.getElementById('imageInput').click()">
+                            Upload Image
+                        </button>
+                        
+                        <!-- Mode Toggle moved here -->
+                        <div class="mode-toggle" style="margin-top: 1rem; padding: 0.75rem;">
+                            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+                                <label style="color: rgba(255,255,255,0.9); font-size: 0.875rem; font-weight: 700; text-shadow: 1px 1px 3px rgba(0,0,0,0.9); cursor: pointer; user-select: none;">Smart Insert:</label>
+                                <div class="toggle-switch" id="modeToggleSwitch" onclick="toggleInsertMode()">
+                                    <div class="toggle-slider"></div>
+                                </div>
+                            </div>
+                            <div class="mode-description" id="modeDescription" style="font-size: 0.75rem; line-height: 1.4;">Click word to wrap with ** or "" | Click {{user}}/{{char}} to replace word</div>
+                        </div>
+                    </div>
+
+                    <!-- Stats Card -->
+                    <div class="stats-card">
+                        <h3>📊 Character Stats</h3>
+                        <div class="stat-item">
+                            <span>Total Tokens</span>
+                            <span class="stat-value" id="totalTokens">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span>Character Count</span>
+                            <span class="stat-value" id="totalChars">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span>Fields Filled</span>
+                            <span class="stat-value" id="fieldsFilled">0/9</span>
+                        </div>
+                    </div>
+
+                    <!-- Common Words -->
+                    <div class="common-words-card">
+                        <h3>🏷️ Common Words</h3>
+                        <p style="color: rgba(255,255,255,0.85); font-size: 0.75rem; margin-bottom: 1rem; text-shadow: 1px 1px 3px rgba(0,0,0,0.8); font-weight: 600;">Click or drag words to insert at cursor</p>
+                        <div id="commonWordsContainer" class="words-container">
+                            <span style="color: rgba(255,255,255,0.8); font-size: 0.875rem; text-shadow: 1px 1px 3px rgba(0,0,0,0.8); font-weight: 600;">No words yet...</span>
+                        </div>
+                    </div>
+
+                    <!-- Metadata Card -->
+                    <div class="stats-card">
+                        <h3>📑 Metadata</h3>
+                        <div style="margin-bottom: 1rem;">
+                            <label class="form-label" style="font-size: 0.75rem; margin-bottom: 0.25rem;">👤 Creator</label>
+                            <input type="text" id="charCreator" class="form-input" style="padding: 0.5rem; font-size: 0.875rem;" placeholder="Your name..." oninput="updateStats()">
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <label class="form-label" style="font-size: 0.75rem; margin-bottom: 0.25rem;">📝 Creator Notes</label>
+                            <textarea id="charCreatorNotes" class="form-textarea" style="padding: 0.5rem; font-size: 0.875rem; min-height: 100px;" placeholder="Notes about the character..." oninput="updateStats()"></textarea>
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <label class="form-label" style="font-size: 0.75rem; margin-bottom: 0.25rem;">🔢 Version</label>
+                            <input type="text" id="charVersion" class="form-input" style="padding: 0.5rem; font-size: 0.875rem;" placeholder="v1.0, main..." oninput="updateStats()">
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <label class="form-label" style="font-size: 0.75rem; margin-bottom: 0.25rem;">🆔 Chub ID</label>
+                            <input type="text" id="chubId" class="form-input" style="padding: 0.5rem; font-size: 0.875rem;" placeholder="Character ID...">
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <label class="form-label" style="font-size: 0.75rem; margin-bottom: 0.25rem;">📁 Full Path</label>
+                            <input type="text" id="chubFullPath" class="form-input" style="padding: 0.5rem; font-size: 0.875rem;" placeholder="username/character...">
+                        </div>
+                        <div>
+                            <label class="form-label" style="font-size: 0.75rem; margin-bottom: 0.25rem;">📝 Depth Prompt</label>
+                            <textarea id="depthPrompt" class="form-textarea" style="padding: 0.5rem; font-size: 0.875rem; min-height: 80px;" placeholder="Depth prompt text..."></textarea>
+                        </div>
+                        <div style="margin-top: 0.5rem;">
+                            <label class="form-label" style="font-size: 0.75rem; margin-bottom: 0.25rem;">📈 Depth</label>
+                            <input type="number" id="depthValue" class="form-input" style="padding: 0.5rem; font-size: 0.875rem;" placeholder="0" value="0" min="0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Editor -->
+                <div class="glass-card">
+                    <div class="form-section">
+                        <label class="form-label">✏️ Name</label>
+                        <input type="text" id="charName" class="form-input" placeholder="Enter character name..." oninput="updateStats()">
+                        <div class="quick-insert">
+                            <button class="quick-btn" draggable="true" onclick="insertText('charName', '{{user}}')">{{user}}</button>
+                            <button class="quick-btn" draggable="true" onclick="insertText('charName', '{{char}}')">{{char}}</button>
+                        </div>
+                        <div class="token-info">
+                            <span id="nameTokens">0 tokens</span>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <label class="form-label">📝 Summary</label>
+                        <textarea id="charSummary" class="form-textarea" placeholder="Brief description..." oninput="updateStats()"></textarea>
+                        <div class="quick-insert">
+                            <button class="quick-btn" draggable="true" onclick="insertText('charSummary', '{{user}}')">{{user}}</button>
+                            <button class="quick-btn" draggable="true" onclick="insertText('charSummary', '{{char}}')">{{char}}</button>
+                            <button class="quick-btn" draggable="true" onclick="insertText('charSummary', '&quot;&quot;')">Speech</button>
+                            <button class="quick-btn" draggable="true" onclick="insertText('charSummary', '**')">Action</button>
+                        </div>
+                        <div class="token-info">
+                            <span id="summaryTokens">0 tokens</span>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <label class="form-label">⚙️ System Message</label>
+                        <textarea id="charSystemPrompt" class="form-textarea" placeholder="System instructions for the AI..." oninput="updateStats()"></textarea>
+                        <div class="quick-insert">
+                            <button class="quick-btn" draggable="true" onclick="insertText('charSystemPrompt', '{{user}}')">{{user}}</button>
+                            <button class="quick-btn" draggable="true" onclick="insertText('charSystemPrompt', '{{char}}')">{{char}}</button>
+                            <button class="quick-btn" draggable="true" onclick="insertText('charSystemPrompt', '&quot;&quot;')">Speech</button>
+                            <button class="quick-btn" draggable="true" onclick="insertText('charSystemPrompt', '**')">Action</button>
+                        </div>
+                        <div class="token-info">
+                            <span id="systemPromptTokens">0 tokens</span>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <label class="form-label">📜 Post-History Instructions</label>
+                        <textarea id="charPostHistory" class="form-textarea" placeholder="Instructions applied after chat history..." oninput="updateStats()"></textarea>
+                        <div class="quick-insert">
+                            <button class="quick-btn" draggable="true" onclick="insertText('charPostHistory', '{{user}}')">{{user}}</button>
+                            <button class="quick-btn" draggable="true" onclick="insertText('charPostHistory', '{{char}}')">{{char}}</button>
+                            <button class="quick-btn" draggable="true" onclick="insertText('charPostHistory', '&quot;&quot;')">Speech</button>
+                            <button class="quick-btn" draggable="true" onclick="insertText('charPostHistory', '**')">Action</button>
+                        </div>
+                        <div class="token-info">
+                            <span id="postHistoryTokens">0 tokens</span>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <label class="form-label">🎭 Personality</label>
+                        <textarea id="charPersonality" class="form-textarea" style="min-height: 200px;" placeholder="Describe the character's personality..." oninput="updateStats()"></textarea>
+                        <div class="quick-insert">
+                            <button class="quick-btn" draggable="true" onclick="insertText('charPersonality', '{{user}}')">{{user}}</button>
+                            <button class="quick-btn" draggable="true" onclick="insertText('charPersonality', '{{char}}')">{{char}}</button>
+                            <button class="quick-btn" draggable="true" onclick="insertText('charPersonality', '&quot;&quot;')">Speech</button>
+                            <button class="quick-btn" draggable="true" onclick="insertText('charPersonality', '**')">Action</button>
+                        </div>
+                        <div class="token-info">
+                            <span id="personalityTokens">0 tokens</span>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <label class="form-label">🌍 Scenario</label>
+                        <textarea id="charScenario" class="form-textarea" placeholder="Describe the scenario or setting..." oninput="updateStats()"></textarea>
+                        <div class="quick-insert">
+                            <button class="quick-btn" draggable="true" onclick="insertText('charScenario', '{{user}}')">{{user}}</button>
+                            <button class="quick-btn" draggable="true" onclick="insertText('charScenario', '{{char}}')">{{char}}</button>
+                            <button class="quick-btn" draggable="true" onclick="insertText('charScenario', '&quot;&quot;')">Speech</button>
+                            <button class="quick-btn" draggable="true" onclick="insertText('charScenario', '**')">Action</button>
+                        </div>
+                        <div class="token-info">
+                            <span id="scenarioTokens">0 tokens</span>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <label class="form-label" style="margin-bottom: 0;">👋 Greetings</label>
+                            <button class="export-btn" style="padding: 0.5rem 1rem; font-size: 0.875rem;" onclick="addGreeting()">+ Add New Greeting</button>
+                        </div>
+                        <div id="greetingsContainer">
+                            <div class="greeting-item">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                    <span style="color: rgba(255,255,255,0.9); font-size: 0.75rem; text-shadow: 1px 1px 3px rgba(0,0,0,0.8); font-weight: 600;">Greeting 1 (Primary)</span>
+                                    <button class="quick-btn" onclick="addGreeting()">+ Add Greeting</button>
+                                </div>
+                                <textarea class="form-textarea greeting-textarea" style="min-height: 150px;" placeholder="First message from the character..." oninput="updateStats()" data-greeting-index="0"></textarea>
+                                <div class="quick-insert">
+                                    <button class="quick-btn" draggable="true" onclick="insertTextToGreeting(0, '{{user}}')">{{user}}</button>
+                                    <button class="quick-btn" draggable="true" onclick="insertTextToGreeting(0, '{{char}}')">{{char}}</button>
+                                    <button class="quick-btn" draggable="true" onclick="insertTextToGreeting(0, '&quot;&quot;')">Speech</button>
+                                    <button class="quick-btn" draggable="true" onclick="insertTextToGreeting(0, '**')">Action</button>
+                                </div>
+                                <div class="token-info">
+                                    <span class="greeting-tokens">0 tokens</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="token-info" style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid rgba(255,255,255,0.1);">
+                            <span id="greetingTokens">Total: 0 tokens across <span id="greetingCount">1</span> greeting(s)</span>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <label class="form-label">💬 Example Messages</label>
+                        <textarea id="charExamples" class="form-textarea" style="min-height: 200px;" placeholder="Example dialogue..." oninput="updateStats()"></textarea>
+                        <div class="quick-insert">
+                            <button class="quick-btn" draggable="true" onclick="insertText('charExamples', '{{user}}')">{{user}}</button>
+                            <button class="quick-btn" draggable="true" onclick="insertText('charExamples', '{{char}}')">{{char}}</button>
+                            <button class="quick-btn" draggable="true" onclick="insertText('charExamples', '&quot;&quot;')">Speech</button>
+                            <button class="quick-btn" draggable="true" onclick="insertText('charExamples', '**')">Action</button>
+                        </div>
+                        <div class="token-info">
+                            <span id="examplesTokens">0 tokens</span>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <label class="form-label">🏷️ Tags (comma-separated)</label>
+                        <input type="text" id="charTags" class="form-input" placeholder="fantasy, warrior, female..." oninput="updateStats()">
+                        <div class="token-info">
+                            <span id="tagsTokens">0 tokens</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Export Section -->
+            <div class="glass-card">
+                <h3 class="form-label" style="margin-bottom: 1rem;">💾 Export Character</h3>
+                <div class="export-section">
+                    <button class="export-btn export-btn-primary" onclick="exportPNG()">
+                        🖼️ Export as Character Card
+                    </button>
+                    <button class="export-btn" onclick="exportTavern()">
+                        📦 TavernAI JSON
+                    </button>
+                    <button class="export-btn" onclick="exportTextGen()">
+                        🤖 Text Generation JSON
+                    </button>
+                    <button class="export-btn" onclick="exportYAML()">
+                        📋 Export as YAML
+                    </button>
+                </div>
+            </div>
+        </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+    <script>
+        let currentImage = null;
+        let greetingCount = 1;
+        let smartInsertMode = false; // false = wrap word, true = replace/enclose selection
+
+        function createNewCharacter() {
+            clearForm();
+            document.getElementById('editorSection').style.display = 'block';
+            showToast('New character created!');
+        }
+
+        function clearForm() {
+            document.getElementById('charName').value = '';
+            document.getElementById('charSummary').value = '';
+            document.getElementById('charSystemPrompt').value = '';
+            document.getElementById('charPostHistory').value = '';
+            document.getElementById('charPersonality').value = '';
+            document.getElementById('charScenario').value = '';
+            document.getElementById('charExamples').value = '';
+            document.getElementById('charCreatorNotes').value = '';
+            document.getElementById('charCreator').value = '';
+            document.getElementById('charTags').value = '';
+            document.getElementById('charVersion').value = '';
+            document.getElementById('chubId').value = '';
+            document.getElementById('chubFullPath').value = '';
+            document.getElementById('depthPrompt').value = '';
+            document.getElementById('depthValue').value = '0';
+            
+            // Reset greetings
+            const container = document.getElementById('greetingsContainer');
+            container.innerHTML = '';
+            greetingCount = 0;
+            addGreeting();
+            
+            // Reset image
+            currentImage = null;
+            document.getElementById('imagePreview').innerHTML = '<span>No Image</span>';
+            document.getElementById('imagePreview').className = 'image-placeholder';
+            
+            updateStats();
+        }
+
+        function extractPNGMetadata(buffer) {
+            try {
+                const view = new Uint8Array(buffer);
+                
+                // PNG signature check
+                if (view[0] !== 0x89 || view[1] !== 0x50 || view[2] !== 0x4E || view[3] !== 0x47 ||
+                    view[4] !== 0x0D || view[5] !== 0x0A || view[6] !== 0x1A || view[7] !== 0x0A) {
+                    throw new Error('Invalid PNG file signature');
+                }
+
+                let pos = 8; // Skip PNG signature
+                
+                while (pos < view.length) {
+                    // Read chunk length (4 bytes, big endian)
+                    const length = (view[pos] << 24) | (view[pos + 1] << 16) | (view[pos + 2] << 8) | view[pos + 3];
+                    pos += 4;
+                    
+                    // Read chunk type (4 bytes)
+                    const chunkType = String.fromCharCode(view[pos], view[pos + 1], view[pos + 2], view[pos + 3]);
+                    pos += 4;
+                    
+                    console.log('PNG chunk:', chunkType, 'length:', length);
+                    
+                    // Check if it's a text chunk
+                    if (chunkType === 'tEXt') {
+                        const chunkData = view.subarray(pos, pos + length);
+                        
+                        // Find null terminator that separates keyword from text
+                        let nullPos = 0;
+                        while (nullPos < chunkData.length && chunkData[nullPos] !== 0) {
+                            nullPos++;
+                        }
+                        
+                        // Get keyword
+                        const keyword = String.fromCharCode.apply(null, Array.from(chunkData.slice(0, nullPos)));
+                        console.log('PNG text keyword:', keyword);
+                        
+                        if (keyword === 'chara') {
+                            // Extract the text data (skip the null terminator)
+                            const textData = chunkData.slice(nullPos + 1);
+                            const decodedText = String.fromCharCode.apply(null, Array.from(textData));
+                            
+                            console.log('Found chara data, attempting base64 decode...');
+                            console.log('Encoded text length:', decodedText.length);
+                            
+                            try {
+                                // Decode base64
+                                const binaryString = atob(decodedText);
+                                // Convert binary string to proper JSON
+                                const jsonString = new TextDecoder().decode(
+                                    new Uint8Array(binaryString.split('').map(c => c.charCodeAt(0)))
+                                );
+                                let result = JSON.parse(jsonString);
+                                console.log('Successfully parsed PNG metadata:', result);
+                                
+                                // Handle nested data structure
+                                if (result.data) {
+                                    console.log('Data is nested under "data" key, extracting...');
+                                    result = result.data;
+                                }
+                                
+                                return result;
+                            } catch (e) {
+                                console.error('Base64 decode failed:', e);
+                                // Try direct text parse
+                                try {
+                                    let result = JSON.parse(decodedText);
+                                    if (result.data) {
+                                        result = result.data;
+                                    }
+                                    return result;
+                                } catch (e2) {
+                                    console.error('Direct parse failed:', e2);
+                                    return null;
+                                }
+                            }
+                        }
+                    }
+                    
+                    pos += length + 4; // Skip chunk data and CRC
+                }
+                
+                console.log('No chara text chunk found in PNG');
+                return null;
+            } catch (error) {
+                console.error('Error extracting PNG metadata:', error);
+                return null;
+            }
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            console.log('File selected:', file.name);
+
+            const extension = file.name.split('.').pop().toLowerCase();
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                try {
+                    let data;
+                    
+                    if (extension === 'yaml' || extension === 'yml') {
+                        console.log('Parsing YAML...');
+                        data = jsyaml.load(e.target.result);
+                    } else if (extension === 'json') {
+                        console.log('Parsing JSON...');
+                        data = JSON.parse(e.target.result);
+                    } else if (extension === 'png') {
+                        console.log('Extracting PNG metadata...');
+                        data = extractPNGMetadata(e.target.result);
+                        if (!data) {
+                            showToast('No character data found in PNG file');
+                            return;
+                        }
+                    }
+                    
+                    console.log('Loaded data:', data);
+                    loadCharacterData(data);
+                    console.log('Showing editor section...');
+                    document.getElementById('editorSection').style.display = 'block';
+                    showToast('Character loaded successfully!');
+                } catch (error) {
+                    console.error('Error loading file:', error);
+                    showToast('Error loading file: ' + error.message);
+                }
+            };
+            
+            reader.onerror = function(error) {
+                console.error('FileReader error:', error);
+                showToast('Error reading file');
+            };
+            
+            if (extension === 'yaml' || extension === 'yml' || extension === 'json') {
+                reader.readAsText(file);
+            } else {
+                reader.readAsArrayBuffer(file);
+            }
+        }
+
+        function loadCharacterData(data) {
+            console.log('loadCharacterData called with:', data);
+            
+            // Handle V2 format (data nested under 'data' key)
+            let characterData = data;
+            if (data.spec === 'chara_card_v2' && data.data) {
+                console.log('Detected V2 format, extracting nested data');
+                characterData = data.data;
+            }
+            
+            // Special handling for YAML format with context field
+            let contextValue = characterData.char_persona || characterData.description || characterData.context || '';
+            let examplesValue = characterData.example_dialogue || characterData.mes_example || '';
+            
+            // If we have a context field from YAML, we need to separate persona from examples
+            if (characterData.context && typeof characterData.context === 'string') {
+                const contextText = characterData.context;
+                
+                // Look for the pattern where example messages start ({{user}}: or {{char}}:)
+                const examplePattern = /(?:^|\n)({{(?:user|char)}}:)/;
+                const match = contextText.match(examplePattern);
+                
+                if (match && match.index > 0) {
+                    // Split context into persona and examples
+                    const personaPart = contextText.substring(0, match.index).trim();
+                    const examplesPart = contextText.substring(match.index).trim();
+                    
+                    console.log('Separated YAML context into persona and examples');
+                    contextValue = personaPart;
+                    examplesValue = examplesPart + (examplesValue ? '\n\n' + examplesValue : '');
+                }
+            }
+            
+            // Don't clear form, just populate
+            document.getElementById('charName').value = characterData.char_name || characterData.name || '';
+            document.getElementById('charSummary').value = characterData.personality || '';
+            document.getElementById('charSystemPrompt').value = characterData.system_prompt || '';
+            document.getElementById('charPostHistory').value = characterData.post_history_instructions || '';
+            document.getElementById('charPersonality').value = contextValue;
+            document.getElementById('charScenario').value = characterData.world_scenario || characterData.scenario || '';
+            
+            // Handle greetings - support for both single and multiple greetings
+            const container = document.getElementById('greetingsContainer');
+            container.innerHTML = '';
+            greetingCount = 0;
+            
+            let greetingsArray = [];
+            
+            // Check for various greeting formats
+            if (characterData.char_greeting) {
+                greetingsArray = Array.isArray(characterData.char_greeting) ? characterData.char_greeting : [characterData.char_greeting];
+            } else if (characterData.first_mes) {
+                greetingsArray = [characterData.first_mes];
+                if (characterData.alternate_greetings && Array.isArray(characterData.alternate_greetings)) {
+                    greetingsArray = greetingsArray.concat(characterData.alternate_greetings);
+                }
+            } else if (characterData.greeting) {
+                greetingsArray = Array.isArray(characterData.greeting) ? characterData.greeting : [characterData.greeting];
+            }
+            
+            console.log('Greetings array:', greetingsArray);
+            
+            // Add all greetings or at least one empty greeting
+            if (greetingsArray.length === 0) {
+                addGreeting('');
+            } else {
+                greetingsArray.forEach((greeting) => {
+                    addGreeting(greeting || '');
+                });
+            }
+            
+            document.getElementById('charExamples').value = examplesValue;
+            document.getElementById('charCreatorNotes').value = characterData.creator_notes || '';
+            document.getElementById('charCreator').value = characterData.creator || '';
+            document.getElementById('charVersion').value = characterData.character_version || '';
+            
+            // Handle tags - convert array to comma-separated string
+            const tags = characterData.tags || [];
+            document.getElementById('charTags').value = Array.isArray(tags) ? tags.join(', ') : tags;
+            
+            // Handle extensions
+            const extensions = characterData.extensions || {};
+            const chub = extensions.chub || {};
+            const depthPrompt = extensions.depth_prompt || {};
+            
+            document.getElementById('chubId').value = chub.id || '';
+            document.getElementById('chubFullPath').value = chub.full_path || '';
+            document.getElementById('depthPrompt').value = depthPrompt.prompt || '';
+            document.getElementById('depthValue').value = depthPrompt.depth !== undefined ? depthPrompt.depth : 0;
+            
+            // Handle avatar/image from newer format
+            if (characterData.avatar && characterData.avatar !== 'none' && characterData.avatar !== '') {
+                console.log('Found avatar URL:', characterData.avatar);
+                // If it's a full URL, load it
+                if (characterData.avatar.startsWith('http')) {
+                    const img = new Image();
+                    img.onload = function() {
+                        currentImage = characterData.avatar;
+                        const preview = document.getElementById('imagePreview');
+                        preview.innerHTML = `<img src="${currentImage}" alt="Character">`;
+                        preview.className = '';
+                        showToast('Image loaded from character data!');
+                    };
+                    img.onerror = function() {
+                        console.log('Could not load image from URL');
+                    };
+                    img.src = characterData.avatar;
+                }
+            }
+            
+            console.log('About to update stats...');
+            updateStats();
+            console.log('Character data loaded successfully');
+        }
+
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                currentImage = e.target.result;
+                const preview = document.getElementById('imagePreview');
+                preview.innerHTML = `<img src="${currentImage}" alt="Character">`;
+                preview.className = '';
+                showToast('Image uploaded!');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function addGreeting(initialText = '') {
+            const container = document.getElementById('greetingsContainer');
+            const index = greetingCount;
+            
+            const greetingDiv = document.createElement('div');
+            greetingDiv.className = 'greeting-item';
+            greetingDiv.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <span style="color: rgba(255,255,255,0.9); font-size: 0.75rem; text-shadow: 1px 1px 3px rgba(0,0,0,0.8); font-weight: 600;">Greeting ${index + 1} ${index === 0 ? '(Primary)' : ''}</span>
+                    ${index > 0 ? `<button class="greeting-delete-btn" onclick="deleteGreeting(${index})">Delete</button>` : ''}
+                </div>
+                <textarea class="form-textarea greeting-textarea" style="min-height: 150px;" placeholder="Message from the character..." oninput="updateStats()" data-greeting-index="${index}">${initialText}</textarea>
+                <div class="quick-insert">
+                    <button class="quick-btn" draggable="true" onclick="insertTextToGreeting(${index}, '{{user}}')">{{user}}</button>
+                    <button class="quick-btn" draggable="true" onclick="insertTextToGreeting(${index}, '{{char}}')">{{char}}</button>
+                    <button class="quick-btn" draggable="true" onclick="insertTextToGreeting(${index}, '&quot;&quot;')">Speech</button>
+                    <button class="quick-btn" draggable="true" onclick="insertTextToGreeting(${index}, '**')">Action</button>
+                </div>
+                <div class="token-info">
+                    <span class="greeting-tokens">0 tokens</span>
+                </div>
+            `;
+            
+            container.appendChild(greetingDiv);
+            greetingCount++;
+            updateStats();
+        }
+
+        function deleteGreeting(index) {
+            const textareas = document.querySelectorAll('.greeting-textarea');
+            if (textareas.length <= 1) {
+                showToast('Cannot delete the only greeting!');
+                return;
+            }
+            
+            textareas[index].closest('.greeting-item').remove();
+            updateStats();
+        }
+
+        function insertTextToGreeting(index, text) {
+            const textareas = document.querySelectorAll('.greeting-textarea');
+            const field = textareas[index];
+            if (!field) return;
+            
+            const savedScrollTop = field.scrollTop;
+            const savedScrollLeft = field.scrollLeft;
+            const start = field.selectionStart;
+            const end = field.selectionEnd;
+            const value = field.value;
+            
+            // Mode 1: Selection Mode (highlight text)
+            if (smartInsertMode && start !== end) {
+                const selectedText = value.substring(start, end);
+                let replacement;
+                
+                if (text === '{{user}}' || text === '{{char}}') {
+                    replacement = text;
+                } else if (text === '""') {
+                    replacement = '"' + selectedText + '"';
+                } else if (text === '**') {
+                    replacement = '*' + selectedText + '*';
+                } else {
+                    replacement = text;
+                }
+                
+                field.value = value.substring(0, start) + replacement + value.substring(end);
+                field.focus();
+                field.setSelectionRange(start, start + replacement.length);
+                updateStats();
+                return;
+            }
+            
+            // Mode 2: Word Mode (no selection, smart wrap)
+            if (!smartInsertMode && start === end) {
+                const wordInfo = getWordAtCursor(value, start);
+                
+                if (wordInfo.word && wordInfo.word.length > 0) {
+                    let replacement;
+                    
+                    if (text === '{{user}}' || text === '{{char}}') {
+                        replacement = text;
+                    } else if (text === '""') {
+                        replacement = '"' + wordInfo.word + '"';
+                    } else if (text === '**') {
+                        replacement = '*' + wordInfo.word + '*';
+                    } else {
+                        replacement = text;
+                    }
+                    
+                    field.value = value.substring(0, wordInfo.start) + replacement + value.substring(wordInfo.end);
+                    field.focus();
+                    field.setSelectionRange(wordInfo.start + replacement.length, wordInfo.start + replacement.length);
+                    updateStats();
+                    return;
+                }
+            }
+            
+            // Default: Just insert at cursor
+            field.value = value.substring(0, start) + text + value.substring(end);
+            field.scrollTop = savedScrollTop;
+            field.scrollLeft = savedScrollLeft;
+            field.focus({ preventScroll: true });
+            field.setSelectionRange(start + text.length, start + text.length);
+            updateStats();
+        }
+
+        function getAllGreetings() {
+            const textareas = document.querySelectorAll('.greeting-textarea');
+            return Array.from(textareas).map(ta => ta.value);
+        }
+
+        function toggleInsertMode() {
+            smartInsertMode = !smartInsertMode;
+            const toggle = document.getElementById('modeToggleSwitch');
+            const description = document.getElementById('modeDescription');
+            
+            if (smartInsertMode) {
+                toggle.classList.add('active');
+                description.textContent = 'Highlight text: {{user}}/{{char}} replaces | "" and ** enclose selection';
+                showToast('Selection Mode: Replace or Enclose');
+            } else {
+                toggle.classList.remove('active');
+                description.textContent = 'Click word to wrap with ** or "" | Click {{user}}/{{char}} to replace word';
+                showToast('Word Mode: Smart wrap at cursor');
+            }
+        }
+
+        function getCaretPositionFromPoint(textarea, clientX, clientY) {
+            // Try using document.caretPositionFromPoint (Firefox) or document.caretRangeFromPoint (Chrome)
+            let position = null;
+            
+            if (document.caretPositionFromPoint) {
+                position = document.caretPositionFromPoint(clientX, clientY);
+                if (position) {
+                    return position.offset;
+                }
+            } else if (document.caretRangeFromPoint) {
+                const range = document.caretRangeFromPoint(clientX, clientY);
+                if (range) {
+                    return range.startOffset;
+                }
+            }
+            
+            // Fallback: Manual calculation
+            const rect = textarea.getBoundingClientRect();
+            const x = clientX - rect.left;
+            const y = clientY - rect.top;
+            
+            // Account for scroll
+            const scrollTop = textarea.scrollTop;
+            const scrollLeft = textarea.scrollLeft;
+            
+            // Get styles
+            const styles = window.getComputedStyle(textarea);
+            const fontSize = parseFloat(styles.fontSize);
+            const lineHeight = parseFloat(styles.lineHeight) || fontSize * 1.2;
+            const paddingLeft = parseFloat(styles.paddingLeft);
+            const paddingTop = parseFloat(styles.paddingTop);
+            
+            // Adjust for padding and scroll
+            const adjustedY = y - paddingTop + scrollTop;
+            const adjustedX = x - paddingLeft + scrollLeft;
+            
+            // Calculate line number
+            const lineNumber = Math.max(0, Math.floor(adjustedY / lineHeight));
+            
+            // Split into lines
+            const lines = textarea.value.split('\n');
+            
+            // Calculate character position
+            let pos = 0;
+            for (let i = 0; i < lineNumber && i < lines.length; i++) {
+                pos += lines[i].length + 1; // +1 for newline
+            }
+            
+            if (lineNumber < lines.length) {
+                // Use canvas to measure text width more accurately
+                const line = lines[lineNumber];
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                ctx.font = `${styles.fontWeight} ${styles.fontSize} ${styles.fontFamily}`;
+                
+                // Binary search for character position
+                let left = 0;
+                let right = line.length;
+                let bestPos = 0;
+                
+                while (left <= right) {
+                    const mid = Math.floor((left + right) / 2);
+                    const textWidth = ctx.measureText(line.substring(0, mid)).width;
+                    
+                    if (textWidth <= adjustedX) {
+                        bestPos = mid;
+                        left = mid + 1;
+                    } else {
+                        right = mid - 1;
+                    }
+                }
+                
+                pos += bestPos;
+            } else {
+                pos = textarea.value.length;
+            }
+            
+            return pos;
+        }
+
+        function getWordAtCursor(text, cursorPos) {
+            // Find word boundaries around cursor
+            let start = cursorPos;
+            let end = cursorPos;
+            
+            // Find start of word (stop at space, newline, or special chars)
+            while (start > 0 && /\S/.test(text[start - 1]) && !/[\s\n*"{}]/.test(text[start - 1])) {
+                start--;
+            }
+            
+            // Find end of word
+            while (end < text.length && /\S/.test(text[end]) && !/[\s\n*"{}]/.test(text[end])) {
+                end++;
+            }
+            
+            return { start, end, word: text.substring(start, end) };
+        }
+
+        function insertText(fieldId, text) {
+            const field = document.getElementById(fieldId);
+            const savedScrollTop = field.scrollTop;
+            const savedScrollLeft = field.scrollLeft;
+            const start = field.selectionStart;
+            const end = field.selectionEnd;
+            const value = field.value;
+            
+            // Mode 1: Selection Mode (highlight text)
+            if (smartInsertMode && start !== end) {
+                const selectedText = value.substring(start, end);
+                let replacement;
+                
+                if (text === '{{user}}' || text === '{{char}}') {
+                    // Replace selection with {{user}} or {{char}}
+                    replacement = text;
+                } else if (text === '""') {
+                    // Enclose in quotes
+                    replacement = '"' + selectedText + '"';
+                } else if (text === '**') {
+                    // Enclose in asterisks
+                    replacement = '*' + selectedText + '*';
+                } else {
+                    replacement = text;
+                }
+                
+                field.value = value.substring(0, start) + replacement + value.substring(end);
+                field.focus();
+                field.setSelectionRange(start, start + replacement.length);
+                updateStats();
+                return;
+            }
+            
+            // Mode 2: Word Mode (no selection, smart wrap)
+            if (!smartInsertMode && start === end) {
+                const wordInfo = getWordAtCursor(value, start);
+                
+                if (wordInfo.word && wordInfo.word.length > 0) {
+                    let replacement;
+                    
+                    if (text === '{{user}}' || text === '{{char}}') {
+                        // Replace the word
+                        replacement = text;
+                    } else if (text === '""') {
+                        // Wrap word in quotes
+                        replacement = '"' + wordInfo.word + '"';
+                    } else if (text === '**') {
+                        // Wrap word in asterisks
+                        replacement = '*' + wordInfo.word + '*';
+                    } else {
+                        replacement = text;
+                    }
+                    
+                    field.value = value.substring(0, wordInfo.start) + replacement + value.substring(wordInfo.end);
+                    field.focus();
+                    field.setSelectionRange(wordInfo.start + replacement.length, wordInfo.start + replacement.length);
+                    updateStats();
+                    return;
+                }
+            }
+            
+            // Default: Just insert at cursor
+            field.value = value.substring(0, start) + text + value.substring(end);
+            field.scrollTop = savedScrollTop;
+            field.scrollLeft = savedScrollLeft;
+            field.focus({ preventScroll: true });
+            field.setSelectionRange(start + text.length, start + text.length);
+            updateStats();
+        }
+
+        function countTokens(text) {
+            // Simple approximation: ~4 characters per token
+            return Math.ceil(text.length / 4);
+        }
+
+        // Word frequency analysis
+        let lastFocusedField = null;
+        
+        // Track which field was last focused
+        document.addEventListener('DOMContentLoaded', function() {
+            const fields = ['charName', 'charSummary', 'charPersonality', 'charScenario', 'charExamples'];
+            fields.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    field.addEventListener('focus', function() {
+                        lastFocusedField = field;
+                    });
+                }
+            });
+        });
+
+        function extractCommonWords(text) {
+            // Remove special characters and normalize
+            const normalized = text.toLowerCase()
+                .replace(/{{user}}/g, '')
+                .replace(/{{char}}/g, '')
+                .replace(/[^a-z0-9\s]/g, ' ');
+            
+            // Split into words
+            const words = normalized.split(/\s+/).filter(word => word.length > 3);
+            
+            // Common stop words to exclude
+            const stopWords = new Set([
+                'that', 'with', 'this', 'from', 'have', 'been', 'were', 'will',
+                'would', 'could', 'should', 'their', 'there', 'what', 'when',
+                'where', 'which', 'while', 'about', 'after', 'before', 'between',
+                'into', 'through', 'during', 'above', 'below', 'under', 'again',
+                'further', 'then', 'once', 'here', 'very', 'also', 'much', 'more',
+                'most', 'such', 'only', 'over', 'just', 'than', 'them', 'these',
+                'those', 'some', 'your', 'they', 'each', 'other', 'being', 'doing'
+            ]);
+            
+            // Count word frequency
+            const frequency = {};
+            words.forEach(word => {
+                if (!stopWords.has(word)) {
+                    frequency[word] = (frequency[word] || 0) + 1;
+                }
+            });
+            
+            // Sort by frequency and get top 20
+            return Object.entries(frequency)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 20);
+        }
+
+        function updateCommonWords() {
+            const personality = document.getElementById('charPersonality').value;
+            const scenario = document.getElementById('charScenario').value;
+            const summary = document.getElementById('charSummary').value;
+            const systemPrompt = document.getElementById('charSystemPrompt').value;
+            const postHistory = document.getElementById('charPostHistory').value;
+            
+            const allText = personality + ' ' + scenario + ' ' + summary + ' ' + systemPrompt + ' ' + postHistory;
+            const commonWords = extractCommonWords(allText);
+            
+            const container = document.getElementById('commonWordsContainer');
+            
+            if (commonWords.length === 0) {
+                container.innerHTML = '<span style="color: rgba(255,255,255,0.8); font-size: 0.875rem; text-shadow: 1px 1px 3px rgba(0,0,0,0.8); font-weight: 600;">No words yet...</span>';
+                return;
+            }
+            
+            container.innerHTML = '';
+            
+            commonWords.forEach(([word, count]) => {
+                // Calculate size based on frequency (min 0.8rem, max 1.4rem)
+                const maxCount = commonWords[0][1];
+                const minSize = 0.8;
+                const maxSize = 1.4;
+                const size = minSize + (maxSize - minSize) * (count / maxCount);
+                
+                const badge = document.createElement('div');
+                badge.className = 'word-badge';
+                badge.draggable = true;
+                badge.style.fontSize = size + 'rem';
+                badge.innerHTML = `
+                    <span>${word}</span>
+                    <span class="word-count">${count}</span>
+                `;
+                
+                // Click to insert
+                badge.addEventListener('click', function() {
+                    insertWordAtCursor(word);
+                });
+                
+                // Drag to insert
+                badge.addEventListener('dragstart', function(e) {
+                    e.dataTransfer.setData('text/plain', word);
+                    badge.classList.add('dragging');
+                });
+                
+                badge.addEventListener('dragend', function() {
+                    badge.classList.remove('dragging');
+                });
+                
+                container.appendChild(badge);
+            });
+        }
+
+        function insertWordAtCursor(word) {
+            let field = lastFocusedField;
+            
+            // If no field is focused, try to find the last focused textarea
+            if (!field) {
+                const textareas = document.querySelectorAll('.form-textarea');
+                field = textareas[textareas.length - 1];
+            }
+            
+            if (!field) {
+                // Fallback to personality field
+                field = document.getElementById('charPersonality');
+            }
+            
+            if (field) {
+                const savedScrollTop = field.scrollTop;
+                const savedScrollLeft = field.scrollLeft;
+                const start = field.selectionStart || field.value.length;
+                const end = field.selectionEnd || field.value.length;
+                const value = field.value;
+                
+                // Common words just insert with spaces, no special mode behavior
+                // Add space before if needed
+                const prefix = (start > 0 && value[start - 1] !== ' ' && value[start - 1] !== '\n') ? ' ' : '';
+                const suffix = (end < value.length && value[end] !== ' ' && value[end] !== '\n') ? ' ' : '';
+                
+                field.value = value.substring(0, start) + prefix + word + suffix + value.substring(end);
+                field.scrollTop = savedScrollTop;
+                field.scrollLeft = savedScrollLeft;
+                field.focus({ preventScroll: true });
+                const newPos = start + prefix.length + word.length + suffix.length;
+                field.setSelectionRange(newPos, newPos);
+                
+                updateStats();
+                showToast(`Inserted "${word}"`);
+            }
+        }
+
+        // Enable drag and drop on textareas
+        document.addEventListener('DOMContentLoaded', function() {
+            const textareas = document.querySelectorAll('.form-textarea, .form-input');
+            textareas.forEach(textarea => {
+                textarea.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                });
+                
+                textarea.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const word = e.dataTransfer.getData('text/plain');
+                    if (word) {
+                        // Save scroll position
+                        const savedScrollTop = textarea.scrollTop;
+                        const savedScrollLeft = textarea.scrollLeft;
+                        
+                        const start = textarea.selectionStart;
+                        const end = textarea.selectionEnd;
+                        const value = textarea.value;
+                        
+                        // Calculate drop position from mouse coordinates
+                        const dropPosition = getCaretPositionFromPoint(textarea, e.clientX, e.clientY);
+                        
+                        // Selection Mode: Replace or enclose
+                        if (smartInsertMode && start !== end) {
+                            const selectedText = value.substring(start, end);
+                            let replacement;
+                            
+                            if (word === '{{user}}' || word === '{{char}}') {
+                                replacement = word;
+                            } else if (word === '""') {
+                                replacement = '"' + selectedText + '"';
+                            } else if (word === '**') {
+                                replacement = '*' + selectedText + '*';
+                            } else {
+                                replacement = word;
+                            }
+                            
+                            textarea.value = value.substring(0, start) + replacement + value.substring(end);
+                            textarea.setSelectionRange(start, start + replacement.length);
+                        }
+                        // Word Mode: Smart wrap at cursor
+                        else if (!smartInsertMode && dropPosition === start && start === end) {
+                            const wordInfo = getWordAtCursor(value, dropPosition);
+                            
+                            if (wordInfo.word && wordInfo.word.length > 0) {
+                                let replacement;
+                                
+                                if (word === '{{user}}' || word === '{{char}}') {
+                                    replacement = word;
+                                } else if (word === '""') {
+                                    replacement = '"' + wordInfo.word + '"';
+                                } else if (word === '**') {
+                                    replacement = '*' + wordInfo.word + '*';
+                                } else {
+                                    replacement = word;
+                                }
+                                
+                                textarea.value = value.substring(0, wordInfo.start) + replacement + value.substring(wordInfo.end);
+                                textarea.setSelectionRange(wordInfo.start + replacement.length, wordInfo.start + replacement.length);
+                            } else {
+                                // No word at cursor, insert at drop position
+                                const textBefore = value.substring(0, dropPosition);
+                                const textAfter = value.substring(dropPosition);
+                                textarea.value = textBefore + word + textAfter;
+                                textarea.setSelectionRange(dropPosition + word.length, dropPosition + word.length);
+                            }
+                        }
+                        // Default: Insert at drop position (not cursor position)
+                        else {
+                            const textBefore = value.substring(0, dropPosition);
+                            const textAfter = value.substring(dropPosition);
+                            textarea.value = textBefore + word + textAfter;
+                            textarea.setSelectionRange(dropPosition + word.length, dropPosition + word.length);
+                        }
+                        
+                        // Restore scroll position
+                        textarea.scrollTop = savedScrollTop;
+                        textarea.scrollLeft = savedScrollLeft;
+                        textarea.focus({ preventScroll: true });
+                        
+                        updateStats();
+                        showToast(`Inserted "${word}"`);
+                    }
+                });
+                
+                textarea.addEventListener('focus', function() {
+                    lastFocusedField = textarea;
+                });
+            });
+            
+            // Make all quick-btn elements draggable
+            setupDraggableButtons();
+        });
+        
+        function setupDraggableButtons() {
+            // Use event delegation since buttons are dynamically added
+            document.addEventListener('dragstart', function(e) {
+                if (e.target.classList.contains('quick-btn')) {
+                    e.target.classList.add('dragging');
+                    // Extract the text to insert from the onclick attribute
+                    const onclickAttr = e.target.getAttribute('onclick');
+                    let textToInsert = '';
+                    
+                    if (onclickAttr.includes("'{{user}}'")) {
+                        textToInsert = '{{user}}';
+                    } else if (onclickAttr.includes("'{{char}}'")) {
+                        textToInsert = '{{char}}';
+                    } else if (onclickAttr.includes("'&quot;&quot;'")) {
+                        textToInsert = '""';
+                    } else if (onclickAttr.includes("'**'")) {
+                        textToInsert = '**';
+                    }
+                    
+                    e.dataTransfer.setData('text/plain', textToInsert);
+                    e.dataTransfer.effectAllowed = 'copy';
+                }
+            });
+            
+            document.addEventListener('dragend', function(e) {
+                if (e.target.classList.contains('quick-btn')) {
+                    e.target.classList.remove('dragging');
+                }
+            });
+            
+            // Make quick buttons draggable
+            const makeButtonsDraggable = () => {
+                document.querySelectorAll('.quick-btn').forEach(btn => {
+                    if (!btn.hasAttribute('draggable')) {
+                        btn.draggable = true;
+                    }
+                });
+            };
+            
+            // Initial setup
+            makeButtonsDraggable();
+            
+            // Setup observer to make new buttons draggable
+            const observer = new MutationObserver(makeButtonsDraggable);
+            observer.observe(document.body, { childList: true, subtree: true });
+            
+            // Also setup drag and drop for textareas when new ones are added
+            const setupTextareaDropHandlers = () => {
+                document.querySelectorAll('.form-textarea, .form-input').forEach(textarea => {
+                    if (!textarea.dataset.dropSetup) {
+                        textarea.dataset.dropSetup = 'true';
+                        
+                        textarea.addEventListener('dragover', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                        });
+                        
+                        textarea.addEventListener('drop', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            
+                            const word = e.dataTransfer.getData('text/plain');
+                            if (word) {
+                                // Save scroll position
+                                const savedScrollTop = textarea.scrollTop;
+                                const savedScrollLeft = textarea.scrollLeft;
+                                
+                                const start = textarea.selectionStart;
+                                const end = textarea.selectionEnd;
+                                const value = textarea.value;
+                                
+                                // Calculate drop position from mouse coordinates
+                                const dropPosition = getCaretPositionFromPoint(textarea, e.clientX, e.clientY);
+                                
+                                // Selection Mode: Replace or enclose
+                                if (smartInsertMode && start !== end) {
+                                    const selectedText = value.substring(start, end);
+                                    let replacement;
+                                    
+                                    if (word === '{{user}}' || word === '{{char}}') {
+                                        replacement = word;
+                                    } else if (word === '""') {
+                                        replacement = '"' + selectedText + '"';
+                                    } else if (word === '**') {
+                                        replacement = '*' + selectedText + '*';
+                                    } else {
+                                        replacement = word;
+                                    }
+                                    
+                                    textarea.value = value.substring(0, start) + replacement + value.substring(end);
+                                    textarea.setSelectionRange(start, start + replacement.length);
+                                }
+                                // Word Mode: Smart wrap at DROP POSITION
+                                else if (!smartInsertMode) {
+                                    const wordInfo = getWordAtCursor(value, dropPosition);
+                                    
+                                    if (wordInfo.word && wordInfo.word.length > 0) {
+                                        let replacement;
+                                        
+                                        if (word === '{{user}}' || word === '{{char}}') {
+                                            replacement = word;
+                                        } else if (word === '""') {
+                                            replacement = '"' + wordInfo.word + '"';
+                                        } else if (word === '**') {
+                                            replacement = '*' + wordInfo.word + '*';
+                                        } else {
+                                            replacement = word;
+                                        }
+                                        
+                                        textarea.value = value.substring(0, wordInfo.start) + replacement + value.substring(wordInfo.end);
+                                        textarea.setSelectionRange(wordInfo.start + replacement.length, wordInfo.start + replacement.length);
+                                    } else {
+                                        // No word at drop position, insert at drop position
+                                        const textBefore = value.substring(0, dropPosition);
+                                        const textAfter = value.substring(dropPosition);
+                                        const prefix = (dropPosition > 0 && textBefore[textBefore.length - 1] !== ' ' && textBefore[textBefore.length - 1] !== '\n') ? ' ' : '';
+                                        const suffix = (textAfter.length > 0 && textAfter[0] !== ' ' && textAfter[0] !== '\n') ? ' ' : '';
+                                        textarea.value = textBefore + prefix + word + suffix + textAfter;
+                                        textarea.setSelectionRange(dropPosition + prefix.length + word.length + suffix.length, dropPosition + prefix.length + word.length + suffix.length);
+                                    }
+                                }
+                                // Selection Mode but no selection: Insert at drop position
+                                else {
+                                    const textBefore = value.substring(0, dropPosition);
+                                    const textAfter = value.substring(dropPosition);
+                                    const prefix = (dropPosition > 0 && textBefore[textBefore.length - 1] !== ' ' && textBefore[textBefore.length - 1] !== '\n') ? ' ' : '';
+                                    const suffix = (textAfter.length > 0 && textAfter[0] !== ' ' && textAfter[0] !== '\n') ? ' ' : '';
+                                    textarea.value = textBefore + prefix + word + suffix + textAfter;
+                                    textarea.setSelectionRange(dropPosition + prefix.length + word.length + suffix.length, dropPosition + prefix.length + word.length + suffix.length);
+                                }
+                                
+                                // Restore scroll position
+                                textarea.scrollTop = savedScrollTop;
+                                textarea.scrollLeft = savedScrollLeft;
+                                textarea.focus({ preventScroll: true });
+                                
+                                updateStats();
+                                showToast(`Inserted "${word}"`);
+                            }
+                        });
+                        
+                        textarea.addEventListener('focus', function() {
+                            lastFocusedField = textarea;
+                        });
+                    }
+                });
+            };
+            
+            // Initial setup
+            setupTextareaDropHandlers();
+            
+            // Watch for new textareas
+            const textareaObserver = new MutationObserver(setupTextareaDropHandlers);
+            textareaObserver.observe(document.body, { childList: true, subtree: true });
+        }
+
+        function updateStats() {
+            const name = document.getElementById('charName').value;
+            const summary = document.getElementById('charSummary').value;
+            const systemPrompt = document.getElementById('charSystemPrompt').value;
+            const postHistory = document.getElementById('charPostHistory').value;
+            const personality = document.getElementById('charPersonality').value;
+            const scenario = document.getElementById('charScenario').value;
+            const greetings = getAllGreetings();
+            const examples = document.getElementById('charExamples').value;
+            const creatorNotes = document.getElementById('charCreatorNotes').value;
+            const creator = document.getElementById('charCreator').value;
+            const tags = document.getElementById('charTags').value;
+            const version = document.getElementById('charVersion').value;
+
+            document.getElementById('nameTokens').textContent = countTokens(name) + ' tokens';
+            document.getElementById('summaryTokens').textContent = countTokens(summary) + ' tokens';
+            document.getElementById('systemPromptTokens').textContent = countTokens(systemPrompt) + ' tokens';
+            document.getElementById('postHistoryTokens').textContent = countTokens(postHistory) + ' tokens';
+            document.getElementById('personalityTokens').textContent = countTokens(personality) + ' tokens';
+            document.getElementById('scenarioTokens').textContent = countTokens(scenario) + ' tokens';
+            document.getElementById('tagsTokens').textContent = countTokens(tags) + ' tokens';
+            
+            // Update individual greeting token counts
+            const greetingTokenElements = document.querySelectorAll('.greeting-tokens');
+            let totalGreetingTokens = 0;
+            greetings.forEach((greeting, index) => {
+                const tokens = countTokens(greeting);
+                totalGreetingTokens += tokens;
+                if (greetingTokenElements[index]) {
+                    greetingTokenElements[index].textContent = tokens + ' tokens';
+                }
+            });
+            
+            document.getElementById('greetingTokens').innerHTML = `Total: ${totalGreetingTokens} tokens across <span id="greetingCount">${greetings.length}</span> greeting(s)`;
+            document.getElementById('examplesTokens').textContent = countTokens(examples) + ' tokens';
+
+            const total = countTokens(name + summary + systemPrompt + postHistory + personality + scenario + greetings.join('') + examples + creatorNotes + creator + tags + version);
+            const totalChars = (name + summary + systemPrompt + postHistory + personality + scenario + greetings.join('') + examples + creatorNotes + creator + tags + version).length;
+            const fieldsFilled = [name, summary, systemPrompt, postHistory, personality, scenario, examples, tags].filter(f => f.trim()).length + (greetings.filter(g => g.trim()).length > 0 ? 1 : 0);
+
+            document.getElementById('totalTokens').textContent = total;
+            document.getElementById('totalChars').textContent = totalChars.toLocaleString();
+            document.getElementById('fieldsFilled').textContent = fieldsFilled + '/9';
+            
+            // Update common words
+            updateCommonWords();
+        }
+
+        function exportTavern() {
+            const greetings = getAllGreetings();
+            const tagsInput = document.getElementById('charTags').value;
+            const tagsArray = tagsInput ? tagsInput.split(',').map(tag => tag.trim()).filter(tag => tag) : [];
+            
+            // Build extensions object
+            const extensions = {};
+            const chubId = document.getElementById('chubId').value;
+            const chubFullPath = document.getElementById('chubFullPath').value;
+            const depthPromptText = document.getElementById('depthPrompt').value;
+            const depthValue = parseInt(document.getElementById('depthValue').value) || 0;
+            
+            // Add chub extension if any field is filled
+            if (chubId || chubFullPath) {
+                extensions.chub = {
+                    id: chubId ? parseInt(chubId) : null,
+                    preset: null,
+                    full_path: chubFullPath || '',
+                    custom_css: null,
+                    extensions: [],
+                    expressions: null,
+                    alt_expressions: {},
+                    background_image: '',
+                    related_lorebooks: []
+                };
+            }
+            
+            // Add depth_prompt extension if filled
+            if (depthPromptText || depthValue !== 0) {
+                extensions.depth_prompt = {
+                    depth: depthValue,
+                    prompt: depthPromptText
+                };
+            }
+            
+            const data = {
+                spec: 'chara_card_v2',
+                spec_version: '2.0',
+                data: {
+                    name: document.getElementById('charName').value,
+                    description: document.getElementById('charPersonality').value,
+                    personality: document.getElementById('charSummary').value,
+                    scenario: document.getElementById('charScenario').value,
+                    first_mes: greetings[0] || '',
+                    mes_example: document.getElementById('charExamples').value,
+                    creator_notes: document.getElementById('charCreatorNotes').value,
+                    system_prompt: document.getElementById('charSystemPrompt').value,
+                    post_history_instructions: document.getElementById('charPostHistory').value,
+                    alternate_greetings: greetings.length > 1 ? greetings.slice(1) : [],
+                    tags: tagsArray,
+                    creator: document.getElementById('charCreator').value,
+                    character_version: document.getElementById('charVersion').value,
+                    extensions: extensions,
+                    character_book: null
+                }
+            };
+
+            downloadFile(JSON.stringify(data, null, 2), (data.data.name || 'character') + '.json', 'application/json');
+            showToast('Exported as TavernAI JSON!');
+        }
+
+        function exportTextGen() {
+            const greetings = getAllGreetings();
+            const data = {
+                char_name: document.getElementById('charName').value,
+                char_persona: document.getElementById('charPersonality').value,
+                world_scenario: document.getElementById('charScenario').value,
+                char_greeting: greetings[0] || '',
+                example_dialogue: document.getElementById('charExamples').value
+            };
+
+            downloadFile(JSON.stringify(data, null, 2), (data.char_name || 'character') + '.json', 'application/json');
+            showToast('Exported as Text Generation JSON!');
+        }
+
+        function exportYAML() {
+            const greetings = getAllGreetings();
+            const data = {
+                name: document.getElementById('charName').value,
+                context: document.getElementById('charPersonality').value,
+                greeting: greetings[0] || ''
+            };
+
+            const yamlContent = jsyaml.dump(data);
+            downloadFile(yamlContent, (data.name || 'character') + '.yaml', 'text/yaml');
+            showToast('Exported as YAML!');
+        }
+
+        // CRC32 calculation for PNG chunks
+        function crc32(bytes) {
+            const table = [];
+            for (let i = 0; i < 256; i++) {
+                let c = i;
+                for (let j = 0; j < 8; j++) {
+                    c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+                }
+                table[i] = c;
+            }
+            
+            let crc = 0 ^ (-1);
+            for (let i = 0; i < bytes.length; i++) {
+                crc = (crc >>> 8) ^ table[(crc ^ bytes[i]) & 0xFF];
+            }
+            return (crc ^ (-1)) >>> 0;
+        }
+
+        function injectPNGMetadata(pngDataUrl, characterData) {
+            return new Promise((resolve, reject) => {
+                // Convert data URL to array buffer
+                fetch(pngDataUrl)
+                    .then(res => res.arrayBuffer())
+                    .then(arrayBuffer => {
+                        const view = new Uint8Array(arrayBuffer);
+                        
+                        // Verify PNG signature
+                        if (view[0] !== 0x89 || view[1] !== 0x50 || view[2] !== 0x4E || view[3] !== 0x47) {
+                            reject(new Error('Invalid PNG file'));
+                            return;
+                        }
+                        
+                        // Prepare character data as base64
+                        const jsonString = JSON.stringify(characterData);
+                        const base64Data = btoa(unescape(encodeURIComponent(jsonString)));
+                        
+                        // Create tEXt chunk
+                        const keyword = 'chara';
+                        const keywordBytes = new TextEncoder().encode(keyword);
+                        const textBytes = new TextEncoder().encode(base64Data);
+                        
+                        // tEXt chunk data: keyword + null terminator + text
+                        const chunkData = new Uint8Array(keywordBytes.length + 1 + textBytes.length);
+                        chunkData.set(keywordBytes, 0);
+                        chunkData[keywordBytes.length] = 0; // null terminator
+                        chunkData.set(textBytes, keywordBytes.length + 1);
+                        
+                        // Create chunk type bytes
+                        const chunkType = new TextEncoder().encode('tEXt');
+                        
+                        // Calculate chunk length (4 bytes, big endian)
+                        const chunkLength = chunkData.length;
+                        const lengthBytes = new Uint8Array(4);
+                        lengthBytes[0] = (chunkLength >> 24) & 0xFF;
+                        lengthBytes[1] = (chunkLength >> 16) & 0xFF;
+                        lengthBytes[2] = (chunkLength >> 8) & 0xFF;
+                        lengthBytes[3] = chunkLength & 0xFF;
+                        
+                        // Calculate CRC (chunk type + chunk data)
+                        const crcData = new Uint8Array(chunkType.length + chunkData.length);
+                        crcData.set(chunkType, 0);
+                        crcData.set(chunkData, chunkType.length);
+                        const crc = crc32(crcData);
+                        
+                        // Create CRC bytes (4 bytes, big endian)
+                        const crcBytes = new Uint8Array(4);
+                        crcBytes[0] = (crc >> 24) & 0xFF;
+                        crcBytes[1] = (crc >> 16) & 0xFF;
+                        crcBytes[2] = (crc >> 8) & 0xFF;
+                        crcBytes[3] = crc & 0xFF;
+                        
+                        // Find IEND chunk position (last 12 bytes of PNG)
+                        const iendPos = view.length - 12;
+                        
+                        // Build new PNG: original up to IEND + new tEXt chunk + IEND
+                        const totalLength = iendPos + 4 + 4 + chunkData.length + 4 + 12;
+                        const newPNG = new Uint8Array(totalLength);
+                        
+                        // Copy original PNG up to IEND
+                        newPNG.set(view.subarray(0, iendPos), 0);
+                        
+                        // Add our tEXt chunk
+                        let pos = iendPos;
+                        newPNG.set(lengthBytes, pos); pos += 4;
+                        newPNG.set(chunkType, pos); pos += 4;
+                        newPNG.set(chunkData, pos); pos += chunkData.length;
+                        newPNG.set(crcBytes, pos); pos += 4;
+                        
+                        // Copy IEND chunk
+                        newPNG.set(view.subarray(iendPos), pos);
+                        
+                        // Convert to blob and create URL
+                        const blob = new Blob([newPNG], { type: 'image/png' });
+                        resolve(blob);
+                    })
+                    .catch(reject);
+            });
+        }
+
+        function exportPNG() {
+            if (!currentImage) {
+                showToast('Please upload an image first!');
+                return;
+            }
+            
+            console.log('Starting PNG export...');
+            console.log('Current image:', currentImage.substring(0, 100));
+            
+            const greetings = getAllGreetings();
+            const tagsInput = document.getElementById('charTags').value;
+            const tagsArray = tagsInput ? tagsInput.split(',').map(tag => tag.trim()).filter(tag => tag) : [];
+            
+            // Build extensions object
+            const extensions = {};
+            const chubId = document.getElementById('chubId').value;
+            const chubFullPath = document.getElementById('chubFullPath').value;
+            const depthPromptText = document.getElementById('depthPrompt').value;
+            const depthValue = parseInt(document.getElementById('depthValue').value) || 0;
+            
+            // Add chub extension if any field is filled
+            if (chubId || chubFullPath) {
+                extensions.chub = {
+                    id: chubId ? parseInt(chubId) : null,
+                    preset: null,
+                    full_path: chubFullPath || '',
+                    custom_css: null,
+                    extensions: [],
+                    expressions: null,
+                    alt_expressions: {},
+                    background_image: '',
+                    related_lorebooks: []
+                };
+            }
+            
+            // Add depth_prompt extension if filled
+            if (depthPromptText || depthValue !== 0) {
+                extensions.depth_prompt = {
+                    depth: depthValue,
+                    prompt: depthPromptText
+                };
+            }
+            
+            const characterData = {
+                spec: 'chara_card_v2',
+                spec_version: '2.0',
+                data: {
+                    name: document.getElementById('charName').value,
+                    description: document.getElementById('charPersonality').value,
+                    personality: document.getElementById('charSummary').value,
+                    scenario: document.getElementById('charScenario').value,
+                    first_mes: greetings[0] || '',
+                    mes_example: document.getElementById('charExamples').value,
+                    creator_notes: document.getElementById('charCreatorNotes').value,
+                    system_prompt: document.getElementById('charSystemPrompt').value,
+                    post_history_instructions: document.getElementById('charPostHistory').value,
+                    alternate_greetings: greetings.length > 1 ? greetings.slice(1) : [],
+                    tags: tagsArray,
+                    creator: document.getElementById('charCreator').value,
+                    character_version: document.getElementById('charVersion').value,
+                    extensions: extensions,
+                    character_book: null,
+                    avatar: 'none'
+                }
+            };
+            
+            showToast('Generating character card...');
+            
+            // Create a canvas with the image
+            const img = new Image();
+            img.crossOrigin = 'anonymous'; // Try to avoid CORS issues
+            
+            img.onload = function() {
+                console.log('Image loaded successfully, dimensions:', img.width, 'x', img.height);
+                try {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+                    
+                    console.log('Canvas created, converting to PNG...');
+                    // Convert canvas to data URL
+                    const pngDataUrl = canvas.toDataURL('image/png');
+                    console.log('PNG data URL created, length:', pngDataUrl.length);
+                    
+                    // Inject metadata and download
+                    injectPNGMetadata(pngDataUrl, characterData)
+                        .then(blob => {
+                            console.log('Metadata injected, blob size:', blob.size);
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = (characterData.data.name || 'character') + '.png';
+                            document.body.appendChild(a); // Add to document
+                            a.click();
+                            document.body.removeChild(a); // Remove after click
+                            setTimeout(() => URL.revokeObjectURL(url), 100);
+                            showToast('Character card exported successfully!');
+                        })
+                        .catch(error => {
+                            console.error('Export error:', error);
+                            showToast('Error exporting character card: ' + error.message);
+                        });
+                } catch (error) {
+                    console.error('Canvas error:', error);
+                    showToast('Error creating canvas: ' + error.message);
+                }
+            };
+            
+            img.onerror = function(error) {
+                console.error('Image load error:', error);
+                showToast('Error loading image! Check console for details.');
+            };
+            
+            img.src = currentImage;
+        }
+
+        function downloadFile(content, filename, type) {
+            const blob = new Blob([content], { type });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'slideIn 0.3s ease-out reverse';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Enable drag and drop
+        const uploadBoxes = document.querySelectorAll('.upload-box');
+        
+        uploadBoxes.forEach(box => {
+            box.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                box.style.background = 'rgba(255, 255, 255, 0.35)';
+            });
+            
+            box.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                box.style.background = 'rgba(255, 255, 255, 0.25)';
+            });
+            
+            box.addEventListener('drop', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                box.style.background = 'rgba(255, 255, 255, 0.25)';
+                
+                if (e.dataTransfer.files.length > 0) {
+                    const file = e.dataTransfer.files[0];
+                    const extension = file.name.split('.').pop().toLowerCase();
+                    
+                    if (extension === 'json' || extension === 'yaml' || extension === 'yml' || extension === 'png') {
+                        const fakeEvent = {
+                            target: {
+                                files: [file]
+                            }
+                        };
+                        handleFileUpload(fakeEvent);
+                    } else {
+                        showToast('Please drop a JSON, YAML, or PNG file');
+                    }
+                }
+            });
+        });
+
+        document.addEventListener('dragover', (e) => {
+            e.preventDefault();
+        });
+
+        document.addEventListener('drop', (e) => {
+            e.preventDefault();
+        });
+
+        // Color Control System
+        function hexToRgba(hex, opacity) {
+            const r = parseInt(hex.slice(1, 3), 16);
+            const g = parseInt(hex.slice(3, 5), 16);
+            const b = parseInt(hex.slice(5, 7), 16);
+            return `rgba(${r}, ${g}, ${b}, ${opacity / 100})`;
+        }
+
+        function setupColorControl(colorPickerId, textInputId, opacityId = null, opacityValueId = null, applyFunction) {
+            const colorPicker = document.getElementById(colorPickerId);
+            const textInput = document.getElementById(textInputId);
+            const opacitySlider = opacityId ? document.getElementById(opacityId) : null;
+            const opacityValue = opacityValueId ? document.getElementById(opacityValueId) : null;
+
+            function updateColor() {
+                const color = colorPicker.value;
+                textInput.value = color;
+                if (opacitySlider && opacityValue) {
+                    opacityValue.textContent = opacitySlider.value;
+                    applyFunction(color, opacitySlider.value);
+                } else {
+                    applyFunction(color);
+                }
+            }
+
+            colorPicker.addEventListener('input', updateColor);
+            textInput.addEventListener('input', function() {
+                if (/^#[0-9A-F]{6}$/i.test(textInput.value)) {
+                    colorPicker.value = textInput.value;
+                    updateColor();
+                }
+            });
+
+            if (opacitySlider) {
+                opacitySlider.addEventListener('input', updateColor);
+            }
+        }
+
+        // Setup all color controls
+        document.addEventListener('DOMContentLoaded', function() {
+            // Background gradient
+            setupColorControl('bgGradientStart', 'bgGradientStartText', null, null, updateBackgroundGradient);
+            setupColorControl('bgGradientEnd', 'bgGradientEndText', null, null, updateBackgroundGradient);
+
+            // Accent gradient
+            setupColorControl('accentStart', 'accentStartText', null, null, updateBackgroundGradient);
+            setupColorControl('accentMid', 'accentMidText', null, null, updateBackgroundGradient);
+
+            // Glass card
+            setupColorControl('glassColor', 'glassColorText', 'glassOpacity', 'glassOpacityValue', function(color, opacity) {
+                const rgba = hexToRgba(color, opacity);
+                document.documentElement.style.setProperty('--glass-bg', rgba);
+            });
+
+            // Stats card
+            setupColorControl('statsColor', 'statsColorText', 'statsOpacity', 'statsOpacityValue', function(color, opacity) {
+                const rgba = hexToRgba(color, opacity);
+                document.querySelectorAll('.stats-card, .common-words-card, .image-preview').forEach(el => {
+                    el.style.background = rgba;
+                });
+            });
+
+            // Input fields
+            setupColorControl('inputColor', 'inputColorText', 'inputOpacity', 'inputOpacityValue', function(color, opacity) {
+                const rgba = hexToRgba(color, opacity);
+                document.querySelectorAll('.form-input, .form-textarea').forEach(el => {
+                    el.style.background = rgba;
+                });
+            });
+
+            // Buttons
+            setupColorControl('buttonColor', 'buttonColorText', 'buttonOpacity', 'buttonOpacityValue', function(color, opacity) {
+                const rgba = hexToRgba(color, opacity);
+                document.querySelectorAll('.quick-btn, .upload-box, .export-btn:not(.export-btn-primary), .word-badge').forEach(el => {
+                    if (!el.classList.contains('export-btn-primary')) {
+                        el.style.background = rgba;
+                    }
+                });
+            });
+
+            // Primary button gradient
+            setupColorControl('primaryStart', 'primaryStartText', null, null, updatePrimaryGradient);
+            setupColorControl('primaryEnd', 'primaryEndText', null, null, updatePrimaryGradient);
+        });
+
+        function updateBackgroundGradient() {
+            const start = document.getElementById('bgGradientStart').value;
+            const end = document.getElementById('bgGradientEnd').value;
+            const accentStart = document.getElementById('accentStart').value;
+            const accentMid = document.getElementById('accentMid').value;
+
+            document.body.style.background = `
+                radial-gradient(circle at 100% 100%, ${accentStart} 0%, ${accentMid} 20%, transparent 50%),
+                linear-gradient(315deg, ${start} 0%, ${end} 100%)
+            `;
+            document.body.style.backgroundSize = 'cover';
+        }
+
+        function updatePrimaryGradient() {
+            const start = document.getElementById('primaryStart').value;
+            const end = document.getElementById('primaryEnd').value;
+
+            document.querySelectorAll('.export-btn-primary').forEach(el => {
+                el.style.background = `linear-gradient(135deg, ${start} 0%, ${end} 100%)`;
+            });
+        }
+
+        function resetColors() {
+            // Background
+            document.getElementById('bgGradientStart').value = '#797a85';
+            document.getElementById('bgGradientStartText').value = '#797a85';
+            document.getElementById('bgGradientEnd').value = '#c6d3dc';
+            document.getElementById('bgGradientEndText').value = '#c6d3dc';
+
+            // Accent
+            document.getElementById('accentStart').value = '#ff4800';
+            document.getElementById('accentStartText').value = '#ff4800';
+            document.getElementById('accentMid').value = '#ff8c42';
+            document.getElementById('accentMidText').value = '#ff8c42';
+
+            // Glass
+            document.getElementById('glassColor').value = '#ffffff';
+            document.getElementById('glassColorText').value = '#ffffff';
+            document.getElementById('glassOpacity').value = '15';
+
+            // Stats
+            document.getElementById('statsColor').value = '#ffffff';
+            document.getElementById('statsColorText').value = '#ffffff';
+            document.getElementById('statsOpacity').value = '25';
+
+            // Input
+            document.getElementById('inputColor').value = '#ffffff';
+            document.getElementById('inputColorText').value = '#ffffff';
+            document.getElementById('inputOpacity').value = '35';
+
+            // Button
+            document.getElementById('buttonColor').value = '#ffffff';
+            document.getElementById('buttonColorText').value = '#ffffff';
+            document.getElementById('buttonOpacity').value = '20';
+
+            // Primary
+            document.getElementById('primaryStart').value = '#667eea';
+            document.getElementById('primaryStartText').value = '#667eea';
+            document.getElementById('primaryEnd').value = '#764ba2';
+            document.getElementById('primaryEndText').value = '#764ba2';
+
+            // Trigger updates
+            updateBackgroundGradient();
+            updatePrimaryGradient();
+            document.getElementById('glassOpacity').dispatchEvent(new Event('input'));
+            document.getElementById('statsOpacity').dispatchEvent(new Event('input'));
+            document.getElementById('inputOpacity').dispatchEvent(new Event('input'));
+            document.getElementById('buttonOpacity').dispatchEvent(new Event('input'));
+
+            showToast('Colors reset to defaults!');
+        }
+
+        function saveColors() {
+            const colorScheme = {
+                bgGradientStart: document.getElementById('bgGradientStart').value,
+                bgGradientEnd: document.getElementById('bgGradientEnd').value,
+                accentStart: document.getElementById('accentStart').value,
+                accentMid: document.getElementById('accentMid').value,
+                glassColor: document.getElementById('glassColor').value,
+                glassOpacity: document.getElementById('glassOpacity').value,
+                statsColor: document.getElementById('statsColor').value,
+                statsOpacity: document.getElementById('statsOpacity').value,
+                inputColor: document.getElementById('inputColor').value,
+                inputOpacity: document.getElementById('inputOpacity').value,
+                buttonColor: document.getElementById('buttonColor').value,
+                buttonOpacity: document.getElementById('buttonOpacity').value,
+                primaryStart: document.getElementById('primaryStart').value,
+                primaryEnd: document.getElementById('primaryEnd').value
+            };
+
+            // Save to localStorage
+            localStorage.setItem('characterEditorColors', JSON.stringify(colorScheme));
+            showToast('Color scheme saved!');
+        }
+
+        function loadColors() {
+            const saved = localStorage.getItem('characterEditorColors');
+            if (!saved) {
+                showToast('No saved color scheme found!');
+                return;
+            }
+
+            try {
+                const colorScheme = JSON.parse(saved);
+
+                // Apply all colors
+                document.getElementById('bgGradientStart').value = colorScheme.bgGradientStart;
+                document.getElementById('bgGradientStartText').value = colorScheme.bgGradientStart;
+                document.getElementById('bgGradientEnd').value = colorScheme.bgGradientEnd;
+                document.getElementById('bgGradientEndText').value = colorScheme.bgGradientEnd;
+
+                document.getElementById('accentStart').value = colorScheme.accentStart;
+                document.getElementById('accentStartText').value = colorScheme.accentStart;
+                document.getElementById('accentMid').value = colorScheme.accentMid;
+                document.getElementById('accentMidText').value = colorScheme.accentMid;
+
+                document.getElementById('glassColor').value = colorScheme.glassColor;
+                document.getElementById('glassColorText').value = colorScheme.glassColor;
+                document.getElementById('glassOpacity').value = colorScheme.glassOpacity;
+
+                document.getElementById('statsColor').value = colorScheme.statsColor;
+                document.getElementById('statsColorText').value = colorScheme.statsColor;
+                document.getElementById('statsOpacity').value = colorScheme.statsOpacity;
+
+                document.getElementById('inputColor').value = colorScheme.inputColor;
+                document.getElementById('inputColorText').value = colorScheme.inputColor;
+                document.getElementById('inputOpacity').value = colorScheme.inputOpacity;
+
+                document.getElementById('buttonColor').value = colorScheme.buttonColor;
+                document.getElementById('buttonColorText').value = colorScheme.buttonColor;
+                document.getElementById('buttonOpacity').value = colorScheme.buttonOpacity;
+
+                document.getElementById('primaryStart').value = colorScheme.primaryStart;
+                document.getElementById('primaryStartText').value = colorScheme.primaryStart;
+                document.getElementById('primaryEnd').value = colorScheme.primaryEnd;
+                document.getElementById('primaryEndText').value = colorScheme.primaryEnd;
+
+                // Trigger updates
+                updateBackgroundGradient();
+                updatePrimaryGradient();
+                document.getElementById('glassOpacity').dispatchEvent(new Event('input'));
+                document.getElementById('statsOpacity').dispatchEvent(new Event('input'));
+                document.getElementById('inputOpacity').dispatchEvent(new Event('input'));
+                document.getElementById('buttonOpacity').dispatchEvent(new Event('input'));
+
+                showToast('Color scheme loaded!');
+            } catch (error) {
+                console.error('Error loading colors:', error);
+                showToast('Error loading color scheme!');
+            }
+        }
+
+        // Auto-load saved colors on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const saved = localStorage.getItem('characterEditorColors');
+            if (saved) {
+                // Small delay to ensure all elements are ready
+                setTimeout(() => {
+                    loadColors();
+                }, 100);
+            }
+        });
+    </script>
+</body>
+</html>
