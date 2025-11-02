@@ -9,7 +9,7 @@ I wanted to create my own edited/custom version of it.
 #### Features
 
 * Customizable design with real-time color and theme controls
-* Support for multiple formats, including TavernAI v2, YAML, and Text Generation JSON
+* Support for multiple formats, including TavernAI V2, YAML, and Text Generation JSON
 * Import from and export to PNG files with embedded metadata
 * Smart editing interface with live token and character counts
 * Dynamic panels for color customization and writing tips
