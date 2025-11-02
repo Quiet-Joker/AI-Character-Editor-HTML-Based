@@ -15,3 +15,9 @@ A browser-based tool for creating, editing, and exporting AI character cards. It
 * Image upload and live preview for character portraits
 * Built-in “Character Creation Guide” sidebar explaining best practices and format structures
 * Configurable export options to save as PNG, JSON, YAML, or TextGen formats
+
+<img width="2444" height="1366" alt="image" src="https://github.com/user-attachments/assets/817ef402-c090-4143-b43a-37f628487725" />
+<img width="2433" height="2000" alt="image" src="https://github.com/user-attachments/assets/3bcd7389-72a8-4e86-b668-851cb594e879" />
+<img width="2432" height="1999" alt="image" src="https://github.com/user-attachments/assets/9da7ee84-27b2-48ae-b36a-38abe7992a6d" />
+
+
