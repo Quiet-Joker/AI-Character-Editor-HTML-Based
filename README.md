@@ -1,6 +1,11 @@
 # AI-Character-Editor-HTML-Based
 A browser-based tool for creating, editing, and exporting AI character cards. It supports multiple file formats, provides detailed editing fields, and includes a built-in guide for creating high-quality AI personalities.
 
+Inspired by https://avakson.github.io/character-editor
+Which was originally made by Zoltan#8287 and forked by AVAKSon#0498
+
+I wanted to create my own edited/custom version of it.
+
 #### Features
 
 * Customizable design with real-time color and theme controls
